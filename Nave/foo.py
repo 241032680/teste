@@ -1,4 +1,4 @@
-def values():
+def stats():
     def hp():
         return hp
     def torpedos():
@@ -21,6 +21,7 @@ def values():
         return cohm
     def escudo():
         return escudo
+    return stats
 torpedos = 5
 plasma = 20
 av = 60
@@ -31,4 +32,4 @@ icss = 120
 bateria = 100
 cohm = 70
 hp = 20
-print (hp, torpedos, av, gas, plasma, aae, frontal, icss, bateria, cohm)
+#print (hp, torpedos, av, gas, plasma, aae, frontal, icss, bateria, cohm)

@@ -1,6 +1,6 @@
-from Nave import foo
+from foo import stats
+stats = stats
 #padrão
-escudo = 10
-hp = 1
-print(escudo)
-print(hp)
+#escudo = 10
+#print(escudo)
+
