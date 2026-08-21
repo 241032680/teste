@@ -1,3 +1,9 @@
+#arrendondar pra cima
+def ceil(a, b):
+    return int(-(-a // b))
+#ceil (5, 2)
+#print (ceil (5, 2))
+#dividir por 1 se só quiser arrendondar sem operação
 
 #stats
 s = {}
@@ -22,6 +28,7 @@ setstat('escudof', 0)
 setstat('escudot', 0)
 setstat('overclock', 0)
 setstat('direct', 1)
+setstat('modo', 1)
 
 #buffs player
 setstat('bmobil',0)
@@ -29,6 +36,41 @@ setstat('bmira',0)
 setstat('bpercep',0)
 
 #print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aae'], s['frontal'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
+
+#distribuição de escudo
+#Padrão: Geração de Escudo Total = 10
+#Frontal: Geração de Escudo Frontal x Traseiro = [15 , 5]
+#Traseira: Geração de Escudo Frontal x Traseiro = [5 , 15]
+#Overclocked: +5 Geração de Escudo, mas +¼ chance de fritar o Gerador por rodada utilizada (¼, ½ , ¾…)
+
+def flip():
+    if (s['overclock']) == 1:
+        setstat ('overclock', int(0))
+    elif (s['overclock']) == 0:
+        setstat ('overclock', int(1))
+    else:
+        setstat('overclock', int(0))
+    setdirect(s['direct'])
+    setmodo(modo)
+    return ()
+def setdirect(direct):
+    if (direct) == 1:
+        setstat ('escudof', ceil((s['escudo'] + (5*s['overclock'])),1))
+        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))))
+    elif (direct) == 2:
+        setstat ('escudof', int((s['escudo'] + (5*s['overclock']))*(1.5)))
+        setstat ('escudot', ceil((s['escudo'] + (5*s['overclock']))*(0.5),1))
+    elif (direct) == 3:
+        setstat ('escudof', ceil((s['escudo'] + (5*s['overclock']))*(0.5), 1))
+        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))*(1.5)))
+    else:
+        setstat ('escudof', ceil(s['escudo'], 1))
+        setstat ('escudot', int(s['escudo']))
+    setstat('direct', direct)
+    return direct
+#print(s['overclock'])
+#flip()
+#print(s['overclock'])
 
 #modos de distribuição de energia
 def setmodo(modo):
@@ -59,10 +101,12 @@ def setmodo(modo):
     else:
         modo = setmodo(1)
     setstat('escudo', s['escudo'])
+    setstat('modo', modo)
+    setdirect(s['direct'])
     return modo
 
-#modo = setmodo(1)
-#print(modo, s['escudo'])
+modo = setmodo(1)
+print(modo, s['escudo'])
 #modo = setmodo(3)
 #print(modo, s['escudo'])
 #modo = setmodo(5)
@@ -74,43 +118,31 @@ def setmodo(modo):
 #modo = setmodo(3.5)
 #print(modo, s['escudo'])
 
-#distribuição de escudo
-#Padrão: Geração de Escudo Total = 10
-#Frontal: Geração de Escudo Frontal x Traseiro = [15 , 5]
-#Traseira: Geração de Escudo Frontal x Traseiro = [5 , 15]
-#Overclocked: +5 Geração de Escudo, mas +¼ chance de fritar o Gerador por rodada utilizada (¼, ½ , ¾…)
 
-def flip():
-    if (s['overclock']) == 1:
-        setstat ('overclock', int(0))
-    elif (s['overclock']) == 0:
-        setstat ('overclock', int(1))
-    else:
-        setstat('overclock', int(0))
-    setdirect(s['direct'])
-    return ()
-def setdirect(direct):
-    if (direct) == 1:
-        setstat ('escudof', int((s['escudo'] + (5*s['overclock']))))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))))
-    elif (direct) == 2:
-        setstat ('escudof', int((s['escudo'] + (5*s['overclock']))*1.5))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))*0.5))
-    elif (direct) == 3:
-        setstat ('escudof', int((s['escudo'] + (5*s['overclock']))*0.5))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))*1.5))
-    else:
-        setstat ('escudof', int(s['escudo']))
-        setstat ('escudot', int(s['escudo']))
-    setstat('direct', direct)
-    return direct
-#print(s['overclock'])
-#flip()
-#print(s['overclock'])
-
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
 #setmodo(2)
 #setdirect(3)
-#print(s['escudof'], s['escudot'])
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
 #flip()
-#print(s['escudof'], s['escudot'])
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
+#modo = setmodo(3)
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
+#setdirect(2)
+#flip()
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
+#setmodo(4)
+#flip()
+#setdirect(1)
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
+#setdirect(3)
+#flip()
+#setmodo(5)
+#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
 
+for modo in range(6):
+    modo = setmodo(modo)
+    #for direct in range(4):
+        #direct = setdirect(direct)
+    if modo > 5:
+        break
+    print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
