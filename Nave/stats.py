@@ -12,6 +12,9 @@ def setstat(name, value):
     s[name] = value
 
 #statsnave
+#for x in ['torpedos', 'plasma', 'av', 'gas', 'aae', 'frontal', 'icss', 'bateria', 'cohm', 'hp', 'escudo', 'velmax', 'escudof', 'escudot', 'overclock', 'direct', 'modo']:
+#    setstat(x, 0)
+
 setstat('torpedos', 5)
 setstat('plasma', 20)
 setstat('av', 60)
@@ -34,6 +37,11 @@ setstat('modo', 1)
 setstat('bmobil',0)
 setstat('bmira',0)
 setstat('bpercep',0)
+setstat('bpilot', 0)
+setstat('butil', 0)
+setstat('btorp', 0)
+setstat('baae', 0)
+setstat('bfront', 0)
 
 #print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aae'], s['frontal'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
 
@@ -77,27 +85,45 @@ def setmodo(modo):
     if modo == int(1):
         setstat('escudo', 10)
         setstat('velmax', 7)
+        setstat('btorp', 0)
+        setstat('baae', 0)
+        setstat('bfront', 0)
+        setstat('bpilot', 0)
+        setstat('butil', 0)
+
     elif modo == int(2):
         setstat('escudo', 15)
         setstat('velmax', 5)
-        setstat('aae', s['aae'] - 8)
-        setstat('torpedos', s['torpedos'] - 5)
+        setstat('btorp', -5)
+        setstat('baae', -8)
+        setstat('bfront', -6)
+        setstat('bpilot', -1)
+        setstat('butil', -1)
     elif modo == int(3):
         setstat('escudo', 9)
         setstat('velmax', 10)
-        setstat('aae', s['aae'] - 5)
-        setstat('torpedos', s['torpedos'] - 5)
+        setstat('baae', -5)
+        setstat('btorp', -5)
+        setstat('bfront', -4)
+        setstat('bpilot', 2)
+        setstat('butil', -1)
     elif modo == int(4):
         setstat('escudo', 7)
         setstat('velmax', 6)
-        setstat('aae', s['aae'] + 6)
-        setstat('torpedos', s['torpedos'] + 1)
+        setstat('baae', 6)
+        setstat('btorp', 1)
+        setstat('bfront', 4)
+        setstat('bpilot', 0)
+        setstat('butil', -1)
     elif modo == int(5):
         modo = 5
         setstat('escudo', 8)
         setstat('velmax', 6)
-        setstat('aae', s['aae'] - 3)
-        setstat('torpedos', s['torpedos'] +5 )
+        setstat('baae',  -3)
+        setstat('btorp', 5 )
+        setstat('bfront', -2)
+        setstat('bpilot', 1)
+        setstat('butil', 2)        
     else:
         modo = setmodo(1)
     setstat('escudo', s['escudo'])
@@ -139,10 +165,29 @@ print(modo, s['escudo'])
 #setmodo(5)
 #print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
 
-for modo in range(6):
-    modo = setmodo(modo)
-    #for direct in range(4):
-        #direct = setdirect(direct)
-    if modo > 5:
-        break
-    print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
+#for modo in range(6):
+#    modo = setmodo(modo)
+#    #for direct in range(4):
+#        #direct = setdirect(direct)
+#    if modo > 5:
+#        break
+#    print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
+
+def util(crio, sonar, radio, grav):
+    if crio == True:
+        print ("Crio On")
+    else:
+        print ("Crio Off")
+    if sonar == True:
+        print ("Sonar On")
+    else:
+        print ("Sonar Off")
+    if radio == True:
+        print ("Radio On")
+    else:
+        print ("Radio Off")
+    if grav == True:
+        print ("Gravity On")
+    else:
+        print ("Gravity Off")
+
