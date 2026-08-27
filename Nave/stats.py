@@ -32,6 +32,8 @@ setstat('escudot', 0)
 setstat('overclock', 0)
 setstat('direct', 1)
 setstat('modo', 1)
+setstat('podeusartorpedo', true)
+setstat('podeusarcomms', true)
 
 #buffs player
 setstat('bmobil',0)
@@ -42,6 +44,11 @@ setstat('butil', 0)
 setstat('btorp', 0)
 setstat('baae', 0)
 setstat('bfront', 0)
+setstat('bvelmax',0)
+setstat('brolls',0)
+setstat('bcover',0)
+setstat('bescudo',0)
+
 
 #print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aae'], s['frontal'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
 
@@ -119,11 +126,11 @@ def setmodo(modo):
         modo = 5
         setstat('escudo', 8)
         setstat('velmax', 6)
-        setstat('baae',  -3)
+        setstat('baae', -3)
         setstat('btorp', 5 )
         setstat('bfront', -2)
         setstat('bpilot', 1)
-        setstat('butil', 2)        
+        setstat('butil', 2)
     else:
         modo = setmodo(1)
     setstat('escudo', s['escudo'])
@@ -132,7 +139,7 @@ def setmodo(modo):
     return modo
 
 modo = setmodo(1)
-print(modo, s['escudo'])
+#print(modo, s['escudo'])
 #modo = setmodo(3)
 #print(modo, s['escudo'])
 #modo = setmodo(5)
@@ -178,16 +185,38 @@ def util(crio, sonar, radio, grav):
         print ("Crio On")
     else:
         print ("Crio Off")
+	setstat('brolls', -1)
+	setstat('criodesmaio', 5)
+	setstat('bvelmax', 0)
+	setstat('baae', 4)
+	setstat('bfront', 4)
     if sonar == True:
         print ("Sonar On")
     else:
         print ("Sonar Off")
+	setstat('podeusartorpedo', true)
+	setstat('bmira', -2)
+	setstat('bpercep', -1)
+	setstat('baae', 3)
+	setstat('bfront', 1)
+	setstat('bvelmax', 1)
     if radio == True:
         print ("Radio On")
     else:
         print ("Radio Off")
+	setstat('podeusarcomms', false)
+	setstat('bvelmax', 1)
     if grav == True:
         print ("Gravity On")
     else:
         print ("Gravity Off")
+	setstat('bmobil', -2)
+	setstat('bcover', -2)
+	setstat('bmira', -1)
+	setstat('bescudo', 2)
+	setstat('baee', 1)
+	setstat('bfront', 1)
 
+
+util(1,0,1,0)
+print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
