@@ -220,3 +220,16 @@ def util(crio, sonar, radio, grav):
 
 util(1,0,1,0)
 print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
+
+#rodada: cada jogador e inimmigo tem seu turno
+#turno de cada jogador: 3 ações
+#turno de cada inimigo: instantâneo
+#ordem de turnos: piloto, copiloto, engenheiro, atirador, atirador aae, ajuste de distância, inimigos
+
+def hitnave(intensidade)
+    if intensidade == "L" or intensidade == "l": #leve
+        setstat('hp', s['hp'] -5)
+
+    elif intensidade == "P" or intensidade == "p": #pesado
+    else:
+
