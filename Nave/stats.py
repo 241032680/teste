@@ -231,5 +231,6 @@ def hitnave(intensidade)
         setstat('hp', s['hp'] -5)
 
     elif intensidade == "P" or intensidade == "p": #pesado
+        setstat('hp', s['hp'] -12)
     else:
-
+        setstat('hp', s['hp'] -8)
