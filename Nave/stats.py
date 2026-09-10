@@ -39,6 +39,8 @@ setstat('radio', 1)
 setstat('crio', 1)
 setstat('podeusartorpedo', True)
 setstat('podeusarcomms', True)
+setstat('turnos', 1)
+setstat('rods', 1)
 
 #buffs player
 setstat('bmobil',0)
@@ -144,46 +146,6 @@ def setmodo(modo):
     return modo
 
 modo = setmodo(1)
-#print(modo, s['escudo'])
-#modo = setmodo(3)
-#print(modo, s['escudo'])
-#modo = setmodo(5)
-#print(modo, s['escudo'])
-#modo = setmodo(90)
-#print(modo, s['escudo'])
-#modo = setmodo(-1)
-#print(modo, s['escudo'])
-#modo = setmodo(3.5)
-#print(modo, s['escudo'])
-
-
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-#setmodo(2)
-#setdirect(3)
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-#flip()
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-#modo = setmodo(3)
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-#setdirect(2)
-#flip()
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-#setmodo(4)
-#flip()
-#setdirect(1)
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-#setdirect(3)
-#flip()
-#setmodo(5)
-#print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
-
-#for modo in range(6):
-#    modo = setmodo(modo)
-#    #for direct in range(4):
-#        #direct = setdirect(direct)
-#    if modo > 5:
-#        break
-#    print("escudof:", s['escudof'], "escudot:", s['escudot'], "escudo:", s['escudo'], "overclock:", s['overclock'], "direct:", s['direct'], "modo:", s['modo'])
 
 def util(crio, sonar, radio, grav):
     if crio == True:
@@ -239,7 +201,7 @@ def util(crio, sonar, radio, grav):
         #return s['grav']
 
 util(1,0,1,0)
-print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
+#print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
 
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
@@ -279,22 +241,20 @@ def rand():
         setstatat('d', ceil(s['d'], -1))
     setstat('a', s['a'] + int(s['crio']) + int(s['sonar']) + int(s['grav']) + int(s['radio']) + s['escudo'])
     setstat('b', s['b'] + int(s['crio']) + int(s['sonar']) + int(s['grav']) + int(s['radio']) + s['hp'])
-    seedgen = lcg (((s['a']+s['d'])**2)/(s['d']), 1103515245, 12345+s['d'], (2**31)-1, n=100)
-    pos = lcg (s['b'], 1103515245, int(12345+((s['overclock']|s['sonar'])*(s['d'])/(s['d']**(s['direct'])))), (2**31)-1, n=100)
+    seedgen = lcg (((s['a']+s['d'])**2)&(s['d']), 1103515245, 12345+s['d'], (2**31), n=100)
+    pos = lcg (s['b'], 1103515245, int(12345+((s['overclock']|s['sonar'])*(s['d'])^(s['d']**(s['direct'])))), (2**31+1), n=100)
     for _ in pos:
-        y = len(str(_)) + t
+        y = len(str(_))
         z = (z+(s['z'])+y+modo+((s['btorp']%4)+1)%2048)
         if z <= 0:
-            z = (lcg(ceil(z, -1), 1103515245, 12345+s['d']+s['a']+s['av'], (2**31)-1, n=1)[0])
-        setstat('z', ((z%20)+1))
+            z = (lcg(ceil(z, -1), 1103515245, 12345+s['d']+s['a']+s['av']-k+j+t, (2**31), n=1)[0])
+        setstat('z', ((z%997)+1))
     pos = (pos[z%100]%99)+1
-    #print(f'pos: {pos}')
     seed = int((seedgen[pos]%999998) +1)
-    #print(f'seed: {seed}')
-    lista = lcg(seed+(s['bfront']-s['d']%6), 1103515245, 12345, (2**31)-1, n=100)
+    lista = lcg(seed+(s['bfront']-s['d']%6), 1103515245, 12345+s['turnos']+s['rods'], (2**31-1), n=100)
     f = lista[(pos%((seed%pos)+1)+1)]%(((s['a']*s['b'])%z)+1)
     #mais randomização
-    seedgen = seed + (lcg(f, 1103515245, 12345+((y%8)+1), (2**16)-1, n=1)[0])
+    seedgen = seed + (lcg(f, 1103515245, 12345+((y%8)+1), (2**16), n=1)[0])
     if f%10 > 4 or int(s['d']%64) > 22:
         setstat('d', (((s['a']|s['b'])<<1)%8092)+1)
         setstat('z', (s['a']+((s['b']^((y+1)//(s['torpedos']+1)))%1024)+1))
@@ -313,7 +273,6 @@ def rand():
         setstat('a', s['a']+(s['a']^s['b'])+1)
         setstat('z', s['z']+((s['a']%255)+1))
         setstat('d', (((s['d']^y)%s['d'])+1))
-    print(f'f: {f}')
     if f%10 in range(1, 4):
         setstat('d', s['d']+1)
         setstat('a', s['a']+3)
@@ -332,18 +291,14 @@ def rand():
     elif f%10 == 0:
         setstat('d', (s['d']%512)+4)
         setstat('a', ((z*(int(s['crio'])+1) * int(s['sonar']) + int(s['grav']) + (int(s['radio'])))**((s['a']*s['b'])%999998)+1))
-        setstat('b', ((((z+y+s['a']+s['b']+modo)**((s['b']+s['a'])*(int(s['sonar'])+1)))%255)+1))
+        setstat('b', ((((z+y+s['a']+s['b']+modo)&((s['b']+s['a'])*(int(s['sonar'])+1)))%255)+1))
         setstat('z', (s['z'] + (((((s['a'] & s['b'] & s['d'])+1) - ((~((s['a'] ^ s['b'] ^ s['d'])+1)))%1987)+1) + (((s['a']*s['b'])%32)+1))))
     else:
         setstat('d', 404)
         setstat('a', 101)
         setstat('b', 303)
-    print (f'{s['a']},{s['b']}, {s['d']}, {s['z']}')
     setstat('d', s['d']+1)  
     setstat('a', s['a']+1)
     setstat('b', s['b']+1)
-    setstat('z', s['z']+1)    
-    return f
-
-for h in range(1, 50):
-    rand()
+    setstat('z', s['z']+1)
+    return f ^ (f >> 16)
