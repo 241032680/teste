@@ -5,6 +5,7 @@ def ceil(a, b):
 #print (ceil (5, 2))
 #dividir por 1 se só quiser arrendondar sem operação
 
+
 #stats
 s = {}
 
@@ -32,8 +33,12 @@ setstat('escudot', 0)
 setstat('overclock', 0)
 setstat('direct', 1)
 setstat('modo', 1)
-setstat('podeusartorpedo', true)
-setstat('podeusarcomms', true)
+setstat('grav', 1)
+setstat('sonar', 1)
+setstat('radio', 1)
+setstat('crio', 1)
+setstat('podeusartorpedo', True)
+setstat('podeusarcomms', True)
 
 #buffs player
 setstat('bmobil',0)
@@ -183,40 +188,55 @@ modo = setmodo(1)
 def util(crio, sonar, radio, grav):
     if crio == True:
         print ("Crio On")
+        setstat('crio', 1)
+        #return s['crio']
     else:
         print ("Crio Off")
-	setstat('brolls', -1)
-	setstat('criodesmaio', 5)
-	setstat('bvelmax', 0)
-	setstat('baae', 4)
-	setstat('bfront', 4)
+        setstat('brolls', -1)
+        setstat('criodesmaio', 5)
+        setstat('bvelmax', 0)
+        setstat('baae', 4)
+        setstat('bfront', 4)
+        setstat('crio', 0)
+        #return s['crio']
     if sonar == True:
         print ("Sonar On")
+        setstat('sonar', 1)
+        #return s['sonar']
     else:
         print ("Sonar Off")
-	setstat('podeusartorpedo', true)
-	setstat('bmira', -2)
-	setstat('bpercep', -1)
-	setstat('baae', 3)
-	setstat('bfront', 1)
-	setstat('bvelmax', 1)
+        setstat('podeusartorpedo', True)
+        setstat('bmira', -2)
+        setstat('bpercep', -1)
+        setstat('baae', 3)
+        setstat('bfront', 1)
+        setstat('bvelmax', 1)
+        setstat('sonar', 0)
+        #return s['sonar']
     if radio == True:
         print ("Radio On")
+        setstat('radio', 1)
+        #return s['radio']
     else:
         print ("Radio Off")
-	setstat('podeusarcomms', false)
-	setstat('bvelmax', 1)
+        setstat('podeusarcomms', False)
+        setstat('bvelmax', 1)
+        setstat('radio', 0)
+        #return s['radio']
     if grav == True:
         print ("Gravity On")
+        setstat('grav', 1)
+        #return s['grav']
     else:
         print ("Gravity Off")
-	setstat('bmobil', -2)
-	setstat('bcover', -2)
-	setstat('bmira', -1)
-	setstat('bescudo', 2)
-	setstat('baee', 1)
-	setstat('bfront', 1)
-
+        setstat('bmobil', -2)
+        setstat('bcover', -2)
+        setstat('bmira', -1)
+        setstat('bescudo', 2)
+        setstat('baee', 1)
+        setstat('bfront', 1)
+        setstat('grav', 0)
+        #return s['grav']
 
 util(1,0,1,0)
 print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
@@ -226,7 +246,7 @@ print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'],
 #turno de cada inimigo: instantâneo
 #ordem de turnos: piloto, copiloto, engenheiro, atirador, atirador aae, ajuste de distância, inimigos
 
-def hitnave(intensidade)
+def hitnave(intensidade):
     if intensidade == "L" or intensidade == "l": #leve
         setstat('hp', s['hp'] -5)
 
@@ -234,3 +254,96 @@ def hitnave(intensidade)
         setstat('hp', s['hp'] -12)
     else:
         setstat('hp', s['hp'] -8)
+
+#função de randomização
+#Xn+1 = (aXn + c) mod mod
+
+def lcg(Xn, a, c, m, n):
+    resultados = []
+    for _ in range(n):
+        Xn = (a * Xn + c) % m
+        resultados.append(Xn)
+    return resultados
+setstat('d', 1)
+setstat('a', 42)
+setstat('b', 67)
+setstat('z', 1)
+def rand():
+    z = s['z']
+    y = 1
+    t = (int(s['crio']) ^ int(s['sonar']) ^ int(s['grav']) ^ int(s['radio']) ^ s['escudo'])
+    j = (int(s['crio']) & int(s['sonar']) & int(s['grav']) & int(s['radio']) & s['escudo'])
+    k = (int(s['crio']) | int(s['sonar']) | int(s['grav']) | int(s['radio']) | s['escudo'])
+    setstat('d', s['d'])
+    if s['d']<0:
+        setstatat('d', ceil(s['d'], -1))
+    setstat('a', s['a'] + int(s['crio']) + int(s['sonar']) + int(s['grav']) + int(s['radio']) + s['escudo'])
+    setstat('b', s['b'] + int(s['crio']) + int(s['sonar']) + int(s['grav']) + int(s['radio']) + s['hp'])
+    seedgen = lcg (((s['a']+s['d'])**2)/(s['d']), 1103515245, 12345+s['d'], (2**31)-1, n=100)
+    pos = lcg (s['b'], 1103515245, int(12345+((s['overclock']|s['sonar'])*(s['d'])/(s['d']**(s['direct'])))), (2**31)-1, n=100)
+    for _ in pos:
+        y = len(str(_)) + t
+        z = (z+(s['z'])+y+modo+((s['btorp']%4)+1)%2048)
+        if z <= 0:
+            z = (lcg(ceil(z, -1), 1103515245, 12345+s['d']+s['a']+s['av'], (2**31)-1, n=1)[0])
+        setstat('z', ((z%20)+1))
+    pos = (pos[z%100]%99)+1
+    #print(f'pos: {pos}')
+    seed = int((seedgen[pos]%999998) +1)
+    #print(f'seed: {seed}')
+    lista = lcg(seed+(s['bfront']-s['d']%6), 1103515245, 12345, (2**31)-1, n=100)
+    f = lista[(pos%((seed%pos)+1)+1)]%(((s['a']*s['b'])%z)+1)
+    #mais randomização
+    seedgen = seed + (lcg(f, 1103515245, 12345+((y%8)+1), (2**16)-1, n=1)[0])
+    if f%10 > 4 or int(s['d']%64) > 22:
+        setstat('d', (((s['a']|s['b'])<<1)%8092)+1)
+        setstat('z', (s['a']+((s['b']^((y+1)//(s['torpedos']+1)))%1024)+1))
+        setstat('b', (s['bvelmax']&s['bescudo']|s['btorp']%2048)+1)
+        setstat('a', s['baae']+(z^y)+1)
+    if [(z ^ y) and s['a']|s['b'] >= seedgen&pos] or seedgen<<(s['sonar']^s['grav']^s['hp']^(~s['baae'])) <= 69420:
+        setstat('a', ((s['a']-69)%69)+1)
+        setstat('b', ((s['b']-420)%69)+1)
+        setstat('z', ((s['z']-67)%69)+1)
+        setstat('d', ((s['d']-42)%69)+1)
+    if  (s['d']<<1) < (int((s['z']>>5)) ** ((((~(s['bescudo'])+(s['direct'])>>1)))%3)+1):
+        setstat('d', (((s['a']|s['velmax'])<<1)%8092)+1)
+        setstat('z', (s['d']+((f^((s['bpilot']+1)*(s['butil']+1)))%1024)+1))
+        setstat('b', (s['b']&s['escudo']|s['hp']%2048)+1)
+    if s['a'] ^ s['b'] < 4096:
+        setstat('a', s['a']+(s['a']^s['b'])+1)
+        setstat('z', s['z']+((s['a']%255)+1))
+        setstat('d', (((s['d']^y)%s['d'])+1))
+    print(f'f: {f}')
+    if f%10 in range(1, 4):
+        setstat('d', s['d']+1)
+        setstat('a', s['a']+3)
+        setstat('b', s['b']+2)
+        setstat('z', s['z']+ ((s['a'] ^ s['b'] ^ s['d'])+1))
+    elif f%10 in range(4, 8):
+        setstat('d', s['d']+2)
+        setstat('a', s['a']+1)
+        setstat('b', s['b']+3)
+        setstat('z', s['z'] + ((s['a'] | s['b'] | s['d'])+1))
+    elif f%10 in range(8, 10):
+        setstat('d', s['d']+3)
+        setstat('a', s['a']+2)
+        setstat('b', s['b']+1)
+        setstat('z', s['z'] + ((s['a'] & s['b'] & s['d'])+1))        
+    elif f%10 == 0:
+        setstat('d', (s['d']%512)+4)
+        setstat('a', ((z*(int(s['crio'])+1) * int(s['sonar']) + int(s['grav']) + (int(s['radio'])))**((s['a']*s['b'])%999998)+1))
+        setstat('b', ((((z+y+s['a']+s['b']+modo)**((s['b']+s['a'])*(int(s['sonar'])+1)))%255)+1))
+        setstat('z', (s['z'] + (((((s['a'] & s['b'] & s['d'])+1) - ((~((s['a'] ^ s['b'] ^ s['d'])+1)))%1987)+1) + (((s['a']*s['b'])%32)+1))))
+    else:
+        setstat('d', 404)
+        setstat('a', 101)
+        setstat('b', 303)
+    print (f'{s['a']},{s['b']}, {s['d']}, {s['z']}')
+    setstat('d', s['d']+1)  
+    setstat('a', s['a']+1)
+    setstat('b', s['b']+1)
+    setstat('z', s['z']+1)    
+    return f
+
+for h in range(1, 50):
+    rand()
