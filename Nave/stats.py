@@ -144,8 +144,9 @@ setstat('a', 42)
 setstat('b', 67)
 setstat('z', 1)
 
-#variavel placeholder
+#placeholders/pointers
 setstat('foo', 1)
+setstat('pesadoprop', 0)
 
 #print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aae'], s['frontal'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
 
@@ -335,34 +336,52 @@ def hitnave(intensidade):
             match a:
                 case 0:
                     util(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
+                    setstat('danocrio', True)
+                    setstat('brolls', s['brolls'] - 1)
                     y = "Criogênicos"
                 case 1:
-
+                    setstat('danograv', True)
+                    util(crio=s['crio'], sonar=s['sonar'], radio=s['radio'], grav=0)
                     y = "Gerador de Gravidade"
-                #case 2:
-        #
-                #case 3:
-        #
-                #case 4:
-        #
-                #case 5:
-        #
-                #case 6:
-        #
-                #case 7:
-        #
-                #case 8:
-        #
-                #case 9:
-        #
-                #case 10:
-    #
-                #case 11:
+                case 2:
+                    pass
+                case 3:
+                    pass
+                case 4:
+                    pass
+                case 5:
+                    pass
+                case 6:
+                    pass
+                case 7:
+                    pass
+                case 8:
+                    pass
+                case 9:
+                    pass
+                case 10:
+                    pass
+                case 11:
+                    pass
 
         case "P" | "p": #pesado
             setstat('hp', s['hp'] -12)
             z = str("pesado")
             c = 0
+            p = rand()%10
+            match p:
+                case 0|5:
+                    pass
+                case 6:
+                    setstat('pesadoprop', s['pesadoprop']+ 1)
+                    setstat('danopropulsores', True)
+                    k = rand()%6
+                    if k == 6
+                        setstat('novoprop', 1)
+                    setstat('bvelmax', (s['bvelmax']) -1(*s['numprop']+s['pesadoprop']))
+                    y = "Propulsor"
+                case 7|9:
+                    pass
         case "M" | "m":
             setstat('hp', s['hp'] -8)
             z = str("médio")
@@ -389,57 +408,67 @@ def hitnave(intensidade):
             hitnave('p')
             setstat('foo', 1)
         setstat('foo', 1)
-hitnave("r")
-hitnave("l")
-hitnave("r")
-hitnave("r")
-hitnave("r")
-hitnave("r")
-hitnave("r")
-hitnave("l")
-#while s['crio'] == 0:
+        
+
+#ações players
+def conserto(lugar):
+    if lugar == 'prop':
+        setstat('numprop', s['numprop'] -1)
+        setstat('bvelmax', s['bvelmax'] + (1*(1+s['pesadoprop'])))
+        if s['numprop'] <= 0:
+            setstat('danoprop', False)
+    if lugar == 'grav':
+        setstat('bmobil', s['bmobil']+s['rodssemgrav']*2)
+        setstat('bcover', s['bcover']+s['rodssemgrav']*1)
+        setstat('rodssemgrav', 0)
+        setstat('danograv', False)
+    if lugar == 'crio':
+        setstat('brolls', s['brolls'] + 1)
+        setstat('danocrio', False)
+
 
 #while s['gameon'] == 1:
 if s['foo'] > 1 or s['foo'] <= 0:
     setstat('foo', 1)
 
+
+
 #end of round
 
-setstat('foocrio', 1)
-setstat('foograv', 1)
 
-def danos()
-    dg = s['dg']
-    foocrio = s['foocrio']
-    if foograv == 1:
-        setstat('bufferbmobil', s['bmobil'])
-        setstat('bufferbcover', s['bcover'])
-        setstat('foograv', 0)
-    if danograv == True
-        setstat('dg', s['dg'] +1)
+
+
+
+def danos():
+    rodssemgrav = max(s['rodssemgrav'], 5)
+    danograv = s['danograv']
+    danocrio = s['danocrio']
+    danocomms = s['danocomms']
+    if danograv == True:
+        setstat('rodssemgrav', s['rodssemgrav'] +1)
         setstat('bmobil', (s['bmobil']) -2)
         setstat('bcover', (s['bcover']) -1)
         print("Gerador de Gravidade danificado!")
-    if danograv == False:
-        if dg > 1:
-            setstat('bmobil', s['bufferbmobil'])
-            setstat('bcover', (s['bufferbcover']))
-            setstat('foograv', 1)
-        setstat('dg', 0)
     desmaio = s['criodesmaio']
-    if danocrio == True or s['crio'] == 0 or s['crio'] == False
+    if danocrio == True or s['crio'] == 0 or s['crio'] == False:
         setstat('criodesmaio', s['criodesmaio'] -1)
-        if foocrio == 1:
-            setstat('brolls', s['brolls'] - 1)
-            setstat('foocrio, 0')
         print(f"Sistema de Criogenia desativado! \n Jogadores desmaiarão em {desmaio} rodadas!")
     if danocrio == False:
         if desmaio < 5:
-            setstat('brolls', s['brolls'] + 1)
-            setstat('foocrio', 1)
-        setstat('criodesmaio', 5)
-    if danocomms == True
+        setstat('criodesmaio', min(desmaio - int(~int(danocrio)), 5))
+    if danocomms == True:
         setstat('podeusarcomms', False)
         print("Sistema de Comunicações danificado!")
-    if danocomms == False
+    if danocomms == False:
         setstat('podeusarcomms', True)
+    if danomotor == True:
+        if falhamotor == True:
+            pass
+        else:
+            pass
+    if danopropulsores == True:
+        if novoprop == 1:
+            setstat('numprop', s['numprop']+1)
+            print('Um novo propulsor foi danificado!')
+            setstat('novoprop', 0)
+        print("Propulsores danificados!")
