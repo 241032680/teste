@@ -33,29 +33,29 @@ def rand():
     pos = lcg (r['b'], 1103515245, int(12345+((s['overclock']|s['sonar'])*(r['d'])^(r['d']**(s['direct'])))), (2**31+1), n=100)
     for _ in pos:
         y = len(str(_))
-        z = (z+(r['z'])+y+modo+((s['btorp']%4)+1)%2048)
+        z = (z+(r['z'])+y+modo+((b['btorp']%4)+1)%2048)
         if z <= 0:
             z = (lcg(ceil(z, -1), 1103515245, 12345+r['d']+r['a']+s['av']-k+j+t, (2**31), n=1)[0])
         setstat('z', ((z%997)+1))
     pos = (pos[z%100]%99)+1
     seed = int((seedgen[pos]%999998) +1)
-    lista = lcg(seed+(s['bfront']-r['d']%6), 1103515245, 12345+s['turnos']+s['rods'], (2**31-1), n=100)
+    lista = lcg(seed+(b['bfront']-r['d']%6), 1103515245, 12345+s['turnos']+s['rods'], (2**31-1), n=100)
     f = lista[(pos%((seed%pos)+1)+1)]%(((r['a']*r['b'])%z)+1)
     #mais randomização
     seedgen = seed + (lcg(f, 1103515245, 12345+((y%8)+1), (2**16), n=1)[0])
     if f%10 > 4 or int(r['d']%64) > 22:
         setstat('d', (((r['a']|r['b'])<<1)%8092)+1)
         setstat('z', (r['a']+((r['b']^((y+1)//(s['torpedos']+1)))%1024)+1))
-        setstat('b', (s['bvelmax']&s['bescudo']|s['btorp']%2048)+1)
-        setstat('a', s['baae']+(z^y)+1)
-    if [(z ^ y) and r['a']|r['b'] >= seedgen&pos] or seedgen<<(s['sonar']^s['grav']^s['hp']^(~s['baae'])) <= 69420:
+        setstat('b', (b['bvelmax']&b['bescudo']|b['btorp']%2048)+1)
+        setstat('a', b['baae']+(z^y)+1)
+    if [(z ^ y) and r['a']|r['b'] >= seedgen&pos] or seedgen<<(s['sonar']^s['grav']^s['hp']^(~b['baae'])) <= 69420:
         setstat('a', ((r['a']-69)%69)+1)
         setstat('b', ((r['b']-420)%69)+1)
         setstat('z', ((r['z']-67)%69)+1)
         setstat('d', ((r['d']-42)%69)+1)
-    if  (r['d']<<1) < (int((r['z']>>5)) ** ((((~(s['bescudo'])+(s['direct'])>>1)))%3)+1):
+    if  (r['d']<<1) < (int((r['z']>>5)) ** ((((~(b['bescudo'])+(s['direct'])>>1)))%3)+1):
         setstat('d', (((r['a']|s['velmax'])<<1)%8092)+1)
-        setstat('z', (r['d']+((f^((s['bpilot']+1)*(s['butil']+1)))%1024)+1))
+        setstat('z', (r['d']+((f^((b['bpilot']+1)*(b['butil']+1)))%1024)+1))
         setstat('b', (r['b']&s['escudo']|s['hp']%2048)+1)
     if r['a'] ^ r['b'] < 4096:
         setstat('a', r['a']+(r['a']^r['b'])+1)
@@ -91,14 +91,36 @@ def rand():
     setstat('z', r['z']+1)
     return f ^ (f >> 16)
 
+#função seno
+pi = 3.141592653589793
+def sin(x): #formula roubada da wikipedia, adaptada
+    x = (x + pi)%(2*pi) - pi
+    if x > pi/2: x = pi - x
+    elif x < -pi/2: x = -pi - x
+    y = x**2
+    return x*(1 - y/6*(1 - y/20*(1 - y/42*(1 - y/72))))
+
+#função de média:
+def avg(list):
+  l = list.copy()
+  average = ((sum(l) / float(len(l))))
+  return (int(average * 100))/100 #2 casas decimais
+
 #stats
 s = {}
 f = {}
+n = {}
 
+#começando a separar por causa do display/GUI, talvez desnecessário com método...
 def setstat(nome, valor):
     s[nome] = valor
 def setfoo(foo, valor):
     f[foo] = valor
+def setbuff(buff, valor):
+    b[buff] = valor
+def setbase(stat, valor):
+    n[stat] = valor
+
 
 #stats nave
 
@@ -132,18 +154,18 @@ setstat('depressurização', 3)
 setstat('hangarselado', False)
 
 #buffs player
-setstat('bmobil',0)
-setstat('bmira',0)
-setstat('bpercep',0)
-setstat('bpilot', 0)
-setstat('butil', 0)
-setstat('btorp', 0)
-setstat('baae', 0)
-setstat('bfront', 0)
-setstat('bvelmax',0)
-setstat('brolls',0)
-setstat('bcover',0)
-setstat('bescudo',0)
+setbuff('bmobil',0)
+setbuff('bmira',0)
+setbuff('bpercep',0)
+setbuff('bpilot', 0)
+setbuff('butil', 0)
+setbuff('btorp', 0)
+setbuff('baae', 0)
+setbuff('bfront', 0)
+setbuff('bvelmax',0)
+setbuff('brolls',0)
+setbuff('bcover',0)
+setbuff('bescudo',0)
 
 #stats players
 setstat('pilotbase', 1)
@@ -174,14 +196,14 @@ setstat('numprops', 1) #mesma coisa das asas mas pra propulsores
 #print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aaebase'], s['frontalbase'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
 
 def updater(): #update stats
-    setstat('frontal', s['frontalbase']+s['bfront'])
-    setstat('aaebase', s['aaebase']+s['baae'])
-    setstat('velmax', s['bvelmax']+s['bvelmax'])
-    setstat('btorp', s['torpbase'] + s['btorp'])
-    setstat('util', s['utilbase'] + s['butil'])
-    setstat('pilot', s['pilotbase'] + s['bpilot'])
+    setstat('frontal', s['frontalbase']+b['bfront'])
+    setstat('aaebase', s['aaebase']+b['baae'])
+    setstat('velmax', b['bvelmax']+b['bvelmax'])
+    setbuff('btorp', s['torpbase'] + b['btorp'])
+    setstat('util', s['utilbase'] + b['butil'])
+    setstat('pilot', s['pilotbase'] + b['bpilot'])
     setstat('rolls', s['rollsbase']+ s['brolls'])
-    setstat('cover', s['coverbase'] + s['bcover'])
+    setstat('cover', s['coverbase'] + b['bcover'])
     
 #distribuição de escudo
 #Padrão: Geração de Escudo Total = 10
@@ -219,45 +241,45 @@ def setdirect(direct): #direcionar foco dos escudos (equilibrado, frente, atrás
 def setmodo(modo): #modos de distribuição de energia
     if modo == int(1): #padrao
         setstat('escudo', 10)
-        setstat('bvelmax', 0)
-        setstat('btorp', 0)
-        setstat('baae', 0)
-        setstat('bfront', 0)
-        setstat('bpilot', 0)
-        setstat('butil', 0)
+        setbuff('bvelmax', 0)
+        setbuff('btorp', 0)
+        setbuff('baae', 0)
+        setbuff('bfront', 0)
+        setbuff('bpilot', 0)
+        setbuff('butil', 0)
     elif modo == int(2): #escudo
         setstat('escudo', 15)
-        setstat('bvelmax', -2)
-        setstat('btorp', -5)
-        setstat('baae', -8)
-        setstat('bfront', -6)
-        setstat('bpilot', -1)
-        setstat('butil', -1)
+        setbuff('bvelmax', -2)
+        setbuff('btorp', -5)
+        setbuff('baae', -8)
+        setbuff('bfront', -6)
+        setbuff('bpilot', -1)
+        setbuff('butil', -1)
     elif modo == int(3): #propulsores
         setstat('escudo', 9)
-        setstat('bvelmax', 3)
-        setstat('baae', -5)
-        setstat('btorp', -5)
-        setstat('bfront', -4)
-        setstat('bpilot', 2)
-        setstat('butil', -1)
+        setbuff('bvelmax', 3)
+        setbuff('baae', -5)
+        setbuff('btorp', -5)
+        setbuff('bfront', -4)
+        setbuff('bpilot', 2)
+        setbuff('butil', -1)
     elif modo == int(4): #torretas
         setstat('escudo', 7)
-        setstat('bvelmax', -1)
-        setstat('baae', 6)
-        setstat('btorp', 1)
-        setstat('bfront', 4)
-        setstat('bpilot', 0)
-        setstat('butil', -1)
+        setbuff('bvelmax', -1)
+        setbuff('baae', 6)
+        setbuff('btorp', 1)
+        setbuff('bfront', 4)
+        setbuff('bpilot', 0)
+        setbuff('butil', -1)
     elif modo == int(5): #utilitários
         modo = 5
         setstat('escudo', 8)
-        setstat('bvelmax', -1)
-        setstat('baae', -3)
-        setstat('btorp', 5 )
-        setstat('bfront', -2)
-        setstat('bpilot', 1)
-        setstat('butil', 2)
+        setbuff('bvelmax', -1)
+        setbuff('baae', -3)
+        setbuff('btorp', 5 )
+        setbuff('bfront', -2)
+        setbuff('bpilot', 1)
+        setbuff('butil', 2)
     else:
         modo = setmodo(1)
     setstat('escudo', s['escudo'])
@@ -279,10 +301,10 @@ def utilbase(crio, sonar, radio, grav): #utilitários
         #return s['crio']
     else:
         print ("Crio Off")
-        setstat('brolls', -1)
-        setstat('bvelmax', 0)
-        setstat('baae', 4)
-        setstat('bfront', 4)
+        setbuff('brolls', -1)
+        setbuff('bvelmax', 0)
+        setbuff('baae', 4)
+        setbuff('bfront', 4)
         setstat('crio', crio)
         #return s['crio']
     if sonar == True or sonar == 1 or s['sonar']==1:
@@ -292,11 +314,11 @@ def utilbase(crio, sonar, radio, grav): #utilitários
     else:
         print ("Sonar Off")
         setstat('podeusartorpedo', True)
-        setstat('bmira', -2)
-        setstat('bpercep', -1)
-        setstat('baae', 3)
-        setstat('bfront', 1)
-        setstat('bvelmax', 1)
+        setbuff('bmira', -2)
+        setbuff('bpercep', -1)
+        setbuff('baae', 3)
+        setbuff('bfront', 1)
+        setbuff('bvelmax', 1)
         setstat('sonar', sonar)
         #return s['sonar']
     if radio == True or radio == 1 or s['radio']==1:
@@ -306,7 +328,7 @@ def utilbase(crio, sonar, radio, grav): #utilitários
     else:
         print ("Radio Off")
         setstat('podeusarcomms', False)
-        setstat('bvelmax', 1)
+        setbuff('bvelmax', 1)
         setstat('radio', radio)
         #return s['radio']
     if grav == True or grav == 1 or s['grav']==1:
@@ -315,12 +337,12 @@ def utilbase(crio, sonar, radio, grav): #utilitários
         #return s['grav']
     else:
         print ("Gravity Off")
-        setstat('bmobil', -2)
-        setstat('bcover', -2)
-        setstat('bmira', -1)
-        setstat('bescudo', 2)
+        setbuff('bmobil', -2)
+        setbuff('bcover', -2)
+        setbuff('bmira', -1)
+        setbuff('bescudo', 2)
         setstat('baee', 1)
-        setstat('bfront', 1)
+        setbuff('bfront', 1)
         setstat('grav', grav)
         #return s['grav']
 
@@ -332,32 +354,41 @@ def utilbase(crio, sonar, radio, grav): #utilitários
 #varias mecanicas fazem os itens perderem valor
 
 a = {}
+c = {}
+m = {}
+w = {}
 def armazém(nome, valor):
-    a[nome] = valor
+    a[nome.upper()] = valor
 
 armazém('caixa de madeira', 90)
 #medbay (12 slots)
 #itens de cura
 print(a)
 print(s)
-medbay = []
+def medbay(nome, valor, tipo)
+    m[nome.capitalize()] = valor
+    m['Tipo:'] = tipo.capitalize()
 
 #cozinha (12 slots)
 #itens de cura, rango e alguns valiosos
 
-cozinha = []
+def cozinha(nome, valor, tipo)
+    c[nome.capitalize()] = valor
+    c['Tipo:'] = tipo.capitalize()
 
 #sala comum (6 slots)
 #itens pessoais de players, o que não couber em outros espaçoes
 
-salacomum = []
+def salacomum(nome, valor, tipo)
+    w[nome.capitalize()] = valor
+    w['Tipo:'] = tipo.capitalize()
 
 
 
 #utilbase(1,0,1,0)
 #utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
 
-#print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
+#print(b['bmobil'], b['bmira'], b['bpercep'], b['bpilot'],b['butil'], b['btorp'], b['baae'], b['bfront'], b['bvelmax'], s['brolls'],b['bcover'], b['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
 
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
@@ -377,11 +408,12 @@ def hitnave(intensidade): #acertos de inimigos
                 setstat('hp', s['hp'] -5)
             z = str("leve")
             a = (rand()%12)
+            if 
             match a:
                 case 0:
                     utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
                     setstat('danocrio', True)
-                    setstat('brolls', s['brolls'] - 1)
+                    setbuff('brolls', s['brolls'] - 1)
                     y = "Criogênicos"
                 case 1:
                     setstat('danograv', True)
@@ -412,14 +444,14 @@ def hitnave(intensidade): #acertos de inimigos
                     k = rand()%12
                     if k == 12:
                         setstat('novoprop', 1)
-                    setstat('bvelmax', (s['bvelmax']) -(1*(s['numprops']+s['pesadoprop'])))
+                    setbuff('bvelmax', (b['bvelmax']) -(1*(s['numprops']+s['pesadoprop'])))
                     y = "Propulsor"
                 case 11:
                     setstat('danoasa', True)
                     k = rand()%8
                     if k == 8 and s['numasas']<4:
                         setstat('novaasa', 1)
-                    setstat('bpilot', (s['bpilot']) -(1*(s['numasas']+s['pesadoasa']+s['medioasa'])))
+                    setbuff('bpilot', (b['bpilot']) -(1*(s['numasas']+s['pesadoasa']+s['medioasa'])))
                     y = "Uma asa!"
 
         case "P" | "p": #pesado
@@ -436,7 +468,7 @@ def hitnave(intensidade): #acertos de inimigos
                     k = rand()%6
                     if k == 6 and s['numprops'] < 9:
                         setstat('novoprop', 1)
-                    setstat('bvelmax', (s['bvelmax']) -(1*(s['numprops']+s['pesadoprop'])))
+                    setbuff('bvelmax', (b['bvelmax']) -(1*(s['numprops']+s['pesadoprop'])))
                     y = "Um dos propulsores"
                 case 7|9:
                     pass
@@ -453,7 +485,7 @@ def hitnave(intensidade): #acertos de inimigos
                     k = rand()%6
                     if k == 6 and s['numasas']<4:
                         setstat('novaasa', 1)
-                    setstat('bpilot', (s['bpilot']) -(1*(s['numasas']+s['pesadoasa']+s['medioasa'])))
+                    setbuff('bpilot', (b['bpilot']) -(1*(s['numasas']+s['pesadoasa']+s['medioasa'])))
                     y = "Uma asa!"
         case _:
             setstat('hp', s['hp'] -8)
@@ -504,16 +536,16 @@ def conserto(lugar):
     match lugar:
         case 'prop':
             setstat('numprops', s['numprops'] -1)
-            setstat('bvelmax', s['bvelmax'] + (1*(1+s['pesadoprop'])))
+            setbuff('bvelmax', b['bvelmax'] + (1*(1+s['pesadoprop'])))
             if s['numprops'] <= 0:
                 setstat('danoprop', False)
         case 'grav':
-            setstat('bmobil', s['bmobil']+s['rodssemgrav']*2)
-            setstat('bcover', s['bcover']+s['rodssemgrav']*1)
+            setbuff('bmobil', b['bmobil']+s['rodssemgrav']*2)
+            setbuff('bcover', b['bcover']+s['rodssemgrav']*1)
             setstat('rodssemgrav', 0)
             setstat('danograv', False)
         case 'crio':
-            setstat('brolls', s['brolls'] + 1)
+            setbuff('brolls', s['brolls'] + 1)
             setstat('danocrio', False)
         case 'geradorescudo':
             setstat('genescudo', True)
@@ -530,8 +562,8 @@ if s['foo'] > 1 or s['foo'] <= 0:
 #end of round
 def genescudo():
     if s['genescudo'] == True:
-        setstat('escudoefetivof', s['escudof'] + s['bescudo'])
-        setstat('escudoefetivot', s['escudot'] + s['bescudo'])
+        setstat('escudoefetivof', s['escudof'] + b['bescudo'])
+        setstat('escudoefetivot', s['escudot'] + b['bescudo'])
 
 def inventorycheck():
     while len(armazém) > 18:
@@ -552,8 +584,8 @@ def danos():
     danoasa = s['danoasa']
     if danograv == True:
         setstat('rodssemgrav', s['rodssemgrav'] +1)
-        setstat('bmobil', (s['bmobil']) -2)
-        setstat('bcover', (s['bcover']) -1)
+        setbuff('bmobil', (b['bmobil']) -2)
+        setbuff('bcover', (b['bcover']) -1)
         print("Gerador de Gravidade danificado!")
     desmaio = s['criodesmaio']
     if danocrio == True or s['crio'] == 0 or s['crio'] == False:
@@ -596,4 +628,34 @@ def danos():
         elif s['numasas'] > 1:
             print("Asas danificadas!")
     if danoarmazém == True:
-        inventory.pop(rand%18)
+        armazém.pop(rand%18)
+
+
+
+#inimigo, falta fazer a função
+
+i = {
+  "1": {
+  "tipo": "leve",
+  "hp" : int((10 + (sin(random.randint(0, 9999)))*2.22) + 0.5),
+  "velocidade": 6,
+  "mísseis" : rand()%2
+  }
+}
+
+
+#inimigos
+
+#[1 2 3 4...]
+#   ^ 
+#propriedades (velocidade, tipo, etc)
+
+#função de criar inimigos
+#função de ação dos inimigos
+#lógica de tripulação pro boarding
+#lógica de uso dos mísseis
+#lógica de movimento/espaçamento "3d" vulgo inferno provavelmente não vai rolar
+#se rolar usar alguma formula de projeção 3d em plano 2d pra descobrir as line of sight
+#provavelmente trampo
+#variação de velocidade talvez?
+#lógica de velocidade, tanto pra inimigo quanto pra player
