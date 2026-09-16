@@ -7,7 +7,7 @@ def ceil(a, b):
 
 #função de randomização
 #Xn+1 = (aXn + c) mod mod (segundo a wikipedia)
-#sem IA essa merda foi na raça
+#sem IA essa bomba foi na raça
 
 def lcg(Xn, a, c, m, n): 
     resultados = []
@@ -94,16 +94,14 @@ s = {}
 def setstat(name, value):
     s[name] = value
 
-#statsnave
-#for x in ['torpedos', 'plasma', 'av', 'gas', 'aae', 'frontal', 'icss', 'bateria', 'cohm', 'hp', 'escudo', 'velmax', 'escudof', 'escudot', 'overclock', 'direct', 'modo']:
-#    setstat(x, 0)
+#stats nave
 
 setstat('torpedos', 5)
 setstat('plasma', 20)
 setstat('av', 60)
 setstat('gas', 50)
-setstat('aae', 8)
-setstat('frontal', 6)
+setstat('aaebase', 8)
+setstat('frontalbase', 6)
 setstat('icss', 120)
 setstat('bateria', 100)
 setstat('cohm', 70)
@@ -121,8 +119,8 @@ setstat('radio', 3)
 setstat('crio', 3)
 setstat('podeusartorpedo', True)
 setstat('podeusarcomms', True)
-setstat('turnos', 1)
-setstat('rods', 1)
+setstat('torpbase', 1)
+setstat('aaebase', 1)
 
 #buffs player
 setstat('bmobil',0)
@@ -138,25 +136,49 @@ setstat('brolls',0)
 setstat('bcover',0)
 setstat('bescudo',0)
 
+#stats players
+setstat('pilotbase', 1)
+setstat('mobil',1)
+setstat('velmax',1)
+setstat('rollsbase',1)
+setstat('coverbase',1)
+setstat('mirabase',1)
+setstat('percepbase',1)
+setstat('utilbase', 1)
+
+#controles de jogo
+setstat('turnos', 1)
+setstat('rods', 1)
+
 #randomizador
 setstat('d', 1)
 setstat('a', 42)
 setstat('b', 67)
 setstat('z', 1)
 
-#placeholders/pointers
+#placeholders/modificadores
 setstat('foo', 1)
 setstat('pesadoprop', 0)
 
-#print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aae'], s['frontal'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
+#print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aaebase'], s['frontalbase'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
 
+def updater(): #update stats
+    setstat('frontal', s['frontalbase']+s['bfront'])
+    setstat('aaebase', s['aaebase']+s['baae'])
+    setstat('velmax', s['bvelmax']+s['bvelmax'])
+    setstat('btorp', s['torpbase'] + s['btorp'])
+    setstat('util', s['utilbase'] + s['butil'])
+    setstat('pilot', s['pilotbase'] + s['bpilot'])
+    setstat('rolls', s['rollsbase']+ s['brolls'])
+    setstat('cover', s['coverbase'] + s['bcover'])
+    
 #distribuição de escudo
 #Padrão: Geração de Escudo Total = 10
-#Frontal: Geração de Escudo Frontal x Traseiro = [15 , 5]
-#Traseira: Geração de Escudo Frontal x Traseiro = [5 , 15]
+#frontal: Geração de Escudo frontal x Traseiro = [15 , 5]
+#Traseira: Geração de Escudo frontal x Traseiro = [5 , 15]
 #Overclocked: +5 Geração de Escudo, mas +¼ chance de fritar o Gerador por rodada utilizada (¼, ½ , ¾…)
 
-def flip():
+def flip(): #ativar/desativar overclock
     if (s['overclock']) == 1:
         setstat ('overclock', int(0))
     elif (s['overclock']) == 0:
@@ -166,7 +188,7 @@ def flip():
     setdirect(s['direct'])
     setmodo(modo)
     return ()
-def setdirect(direct):
+def setdirect(direct): #direcionar foco dos escudos (equilibrado, frente, atrás)
     if (direct) == 1:
         setstat ('escudof', ceil((s['escudo'] + (5*s['overclock'])),1))
         setstat ('escudot', int((s['escudo'] + (5*s['overclock']))))
@@ -180,50 +202,46 @@ def setdirect(direct):
         setstat ('escudof', ceil(s['escudo'], 1))
         setstat ('escudot', int(s['escudo']))
     setstat('direct', direct)
+    updater()
     return direct
-#print(s['overclock'])
-#flip()
-#print(s['overclock'])
 
-#modos de distribuição de energia
-def setmodo(modo):
-    if modo == int(1):
-        setstat('escudo', 10)
-        setstat('velmax', 7)
+def setmodo(modo): #modos de distribuição de energia
+    if modo == int(1): #padrao
+        setstat('bescudo', 0)
+        setstat('bvelmax', 0)
         setstat('btorp', 0)
         setstat('baae', 0)
         setstat('bfront', 0)
         setstat('bpilot', 0)
         setstat('butil', 0)
-
-    elif modo == int(2):
-        setstat('escudo', 15)
-        setstat('velmax', 5)
+    elif modo == int(2): #escudo
+        setstat('bescudo', 5)
+        setstat('bvelmax', -2)
         setstat('btorp', -5)
         setstat('baae', -8)
         setstat('bfront', -6)
         setstat('bpilot', -1)
         setstat('butil', -1)
-    elif modo == int(3):
-        setstat('escudo', 9)
-        setstat('velmax', 10)
+    elif modo == int(3): #propulsores
+        setstat('bescudo', -1)
+        setstat('bvelmax', 3)
         setstat('baae', -5)
         setstat('btorp', -5)
         setstat('bfront', -4)
         setstat('bpilot', 2)
         setstat('butil', -1)
-    elif modo == int(4):
+    elif modo == int(4): #torretas
         setstat('escudo', 7)
-        setstat('velmax', 6)
+        setstat('bvelmax', -1)
         setstat('baae', 6)
         setstat('btorp', 1)
         setstat('bfront', 4)
         setstat('bpilot', 0)
         setstat('butil', -1)
-    elif modo == int(5):
+    elif modo == int(5): #utilitários
         modo = 5
-        setstat('escudo', 8)
-        setstat('velmax', 6)
+        setstat('bescudo', -2)
+        setstat('bvelmax', -1)
         setstat('baae', -3)
         setstat('btorp', 5 )
         setstat('bfront', -2)
@@ -234,11 +252,12 @@ def setmodo(modo):
     setstat('escudo', s['escudo'])
     setstat('modo', modo)
     setdirect(s['direct'])
+    updater()
     return modo
 
 modo = setmodo(1)
 
-def util(crio, sonar, radio, grav):
+def utilbase(crio, sonar, radio, grav): #utilitários
     setstat('crio', crio)
     setstat('sonar', sonar)
     setstat('radio', radio)
@@ -295,53 +314,38 @@ def util(crio, sonar, radio, grav):
         setstat('grav', grav)
         #return s['grav']
 
-#util(1,0,1,0)
-#util(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
+#utilbase(1,0,1,0)
+#utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
 
 #print(s['bmobil'], s['bmira'], s['bpercep'], s['bpilot'],s['butil'], s['btorp'], s['baae'], s['bfront'], s['bvelmax'], s['brolls'],s['bcover'], s['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
 
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
 #turno de cada inimigo: instantâneo
-#ordem de turnos: piloto, copiloto, engenheiro, atirador, atirador aae, ajuste de distância, inimigos
+#ordem de turnos: piloto, copiloto, engenheiro, atirador, atirador aaebase, ajuste de distância, inimigos
 
-def hitnave(intensidade):
+def hitnave(intensidade): #acertos de inimigos
     c = 0 + s['foo']
     y = "O casco"
-    o = rand()
-    p = (rand()//rand()) << 2
-    q = (rand()*rand()) >> 2
-    r = (rand()^rand()&rand()|rand())
-    if o%10 > 5:
-        setstat('d', int(s['d']+((rand()%127)+1)))
-    else:
-        setstat('d', int(s['d']-((rand()%127)+1)))
-    if q%10 > 6:
-        setstat('a', int(s['a']*((rand()%63)+1)))
-    else:
-        setstat('a', int(s['a']//((rand()%63+1))))
-    if p%10 > 6:
-        setstat('b', int(s['b']**((rand()%7)+1)))
-    else:
-        setstat('b', int(s['b']**((1/((rand()%7)+1)))))
-    if r%10 > 4: 
-        setstat('z', int(s['z']+((r%10)+1)*((rand()%31)+1)))
-    else:
-        setstat('z', int(s['z']-((r%10)+1)*((rand()%31)+1)))
     match intensidade:
         case"L" | "l": #leve
-            setstat('hp', s['hp'] -5)
+            if s['escudoefetivof'] > 0 and s['direçãoinimigo'] == "Frente":
+                setstat('escudoefetivof', s['escudoefetivof'] - 5)
+            elif s['escudoefetivot'] > 0 and s['direçãoinimigo'] == "Atras":
+                setstat('escudoefetivot', s['escudoefetivot'] - 5)
+            else:
+                setstat('hp', s['hp'] -5)
             z = str("leve")
             a = (rand()%12)
             match a:
                 case 0:
-                    util(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
+                    utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
                     setstat('danocrio', True)
                     setstat('brolls', s['brolls'] - 1)
                     y = "Criogênicos"
                 case 1:
                     setstat('danograv', True)
-                    util(crio=s['crio'], sonar=s['sonar'], radio=s['radio'], grav=0)
+                    utilbase(crio=s['crio'], sonar=s['sonar'], radio=s['radio'], grav=0)
                     y = "Gerador de Gravidade"
                 case 2:
                     pass
@@ -376,9 +380,9 @@ def hitnave(intensidade):
                     setstat('pesadoprop', s['pesadoprop']+ 1)
                     setstat('danopropulsores', True)
                     k = rand()%6
-                    if k == 6
+                    if k == 6:
                         setstat('novoprop', 1)
-                    setstat('bvelmax', (s['bvelmax']) -1(*s['numprop']+s['pesadoprop']))
+                    setstat('bvelmax', (s['bvelmax']) -(1*(s['numprop']+s['pesadoprop'])))
                     y = "Propulsor"
                 case 7|9:
                     pass
@@ -408,7 +412,27 @@ def hitnave(intensidade):
             hitnave('p')
             setstat('foo', 1)
         setstat('foo', 1)
-        
+    #entropia pro randomizador
+    o = rand()
+    p = (rand()//rand()) << 2
+    q = (rand()*rand()) >> 2
+    r = (rand()^rand()&rand()|rand())
+    if o%10 > 5:
+        setstat('d', int(s['d']+((rand()%127)+1)))
+    else:
+        setstat('d', int(s['d']-((rand()%127)+1)))
+    if q%10 > 6:
+        setstat('a', int(s['a']*((rand()%63)+1)))
+    else:
+        setstat('a', int(s['a']//((rand()%63+1))))
+    if p%10 > 6:
+        setstat('b', int(s['b']**((rand()%7)+1)))
+    else:
+        setstat('b', int(s['b']**((1/((rand()%7)+1)))))
+    if r%10 > 4: 
+        setstat('z', int(s['z']+((r%10)+1)*((rand()%31)+1)))
+    else:
+        setstat('z', int(s['z']-((r%10)+1)*((rand()%31)+1)))
 
 #ações players
 def conserto(lugar):
@@ -426,7 +450,6 @@ def conserto(lugar):
         setstat('brolls', s['brolls'] + 1)
         setstat('danocrio', False)
 
-
 #while s['gameon'] == 1:
 if s['foo'] > 1 or s['foo'] <= 0:
     setstat('foo', 1)
@@ -434,10 +457,21 @@ if s['foo'] > 1 or s['foo'] <= 0:
 
 
 #end of round
+def genescudo():
+    setstat('escudoefetivof', s['escudof'] + s['bescudo'])
+    setstat('escudoefetivot', s['escudot'] + s['bescudo'])
 
 
-
-
+import random
+for x in range(1, 20):
+    setdirect(random.randint(1,3))
+    setmodo(random.randint(1,5))
+    y = random.randint(0, 2)
+    if y == 0:
+        flip()
+    updater()
+    genescudo()
+    print(f'f: {s['escudoefetivof']}, t: {s['escudoefetivot']}, bescudo: {s['bescudo']}, modo: {s['modo']}, direct: {s['direct']}, overclock: {s['overclock']}')
 
 def danos():
     rodssemgrav = max(s['rodssemgrav'], 5)
@@ -455,7 +489,7 @@ def danos():
         print(f"Sistema de Criogenia desativado! \n Jogadores desmaiarão em {desmaio} rodadas!")
     if danocrio == False:
         if desmaio < 5:
-        setstat('criodesmaio', min(desmaio - int(~int(danocrio)), 5))
+            setstat('criodesmaio', min(desmaio - int(~int(danocrio)), 5))
     if danocomms == True:
         setstat('podeusarcomms', False)
         print("Sistema de Comunicações danificado!")
