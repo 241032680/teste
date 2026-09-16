@@ -121,6 +121,9 @@ setstat('podeusartorpedo', True)
 setstat('podeusarcomms', True)
 setstat('torpbase', 1)
 setstat('aaebase', 1)
+setstat('criodesmaio', 5)
+setstat('depressurização', 3)
+setstat('hangarselado', False)
 
 #buffs player
 setstat('bmobil',0)
@@ -150,6 +153,7 @@ setstat('utilbase', 1)
 setstat('turnos', 1)
 setstat('rods', 1)
 
+
 #randomizador
 setstat('d', 1)
 setstat('a', 42)
@@ -159,6 +163,8 @@ setstat('z', 1)
 #placeholders/modificadores
 setstat('foo', 1)
 setstat('pesadoprop', 0)
+setstat('numasas', 1) #numero de asas DANIFICADAS, numero de asas na nave é 4
+setstat('numprops', 1) #mesma coisa das asas mas pra propulsores
 
 #print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aaebase'], s['frontalbase'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
 
@@ -207,7 +213,7 @@ def setdirect(direct): #direcionar foco dos escudos (equilibrado, frente, atrás
 
 def setmodo(modo): #modos de distribuição de energia
     if modo == int(1): #padrao
-        setstat('bescudo', 0)
+        setstat('escudo', 10)
         setstat('bvelmax', 0)
         setstat('btorp', 0)
         setstat('baae', 0)
@@ -215,7 +221,7 @@ def setmodo(modo): #modos de distribuição de energia
         setstat('bpilot', 0)
         setstat('butil', 0)
     elif modo == int(2): #escudo
-        setstat('bescudo', 5)
+        setstat('escudo', 15)
         setstat('bvelmax', -2)
         setstat('btorp', -5)
         setstat('baae', -8)
@@ -223,7 +229,7 @@ def setmodo(modo): #modos de distribuição de energia
         setstat('bpilot', -1)
         setstat('butil', -1)
     elif modo == int(3): #propulsores
-        setstat('bescudo', -1)
+        setstat('escudo', 9)
         setstat('bvelmax', 3)
         setstat('baae', -5)
         setstat('btorp', -5)
@@ -240,7 +246,7 @@ def setmodo(modo): #modos de distribuição de energia
         setstat('butil', -1)
     elif modo == int(5): #utilitários
         modo = 5
-        setstat('bescudo', -2)
+        setstat('escudo', 8)
         setstat('bvelmax', -1)
         setstat('baae', -3)
         setstat('btorp', 5 )
@@ -269,7 +275,6 @@ def utilbase(crio, sonar, radio, grav): #utilitários
     else:
         print ("Crio Off")
         setstat('brolls', -1)
-        setstat('criodesmaio', 5)
         setstat('bvelmax', 0)
         setstat('baae', 4)
         setstat('bfront', 4)
@@ -314,6 +319,12 @@ def utilbase(crio, sonar, radio, grav): #utilitários
         setstat('grav', grav)
         #return s['grav']
 
+#armazém
+
+inventory = []
+
+
+
 #utilbase(1,0,1,0)
 #utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
 
@@ -348,7 +359,8 @@ def hitnave(intensidade): #acertos de inimigos
                     utilbase(crio=s['crio'], sonar=s['sonar'], radio=s['radio'], grav=0)
                     y = "Gerador de Gravidade"
                 case 2:
-                    pass
+                    setstat('genescudo', False)
+                    y = "Gerador de Escudo"
                 case 3:
                     pass
                 case 4:
@@ -358,15 +370,27 @@ def hitnave(intensidade): #acertos de inimigos
                 case 6:
                     pass
                 case 7:
-                    pass
+                    setstat('podeusarcomms', False)
+                    y = 'Sala de Utilitários'
                 case 8:
                     pass
                 case 9:
-                    pass
+                    setstat('danohangar', True)
+                    y = "Microhangar"
                 case 10:
-                    pass
+                    setstat('danopropulsores', True)
+                    k = rand()%12
+                    if k == 12:
+                        setstat('novoprop', 1)
+                    setstat('bvelmax', (s['bvelmax']) -(1*(s['numprops']+s['pesadoprop'])))
+                    y = "Propulsor"
                 case 11:
-                    pass
+                    setstat('danoasa', True)
+                    k = rand()%8
+                    if k == 8 and s['numasas']<4:
+                        setstat('novaasa', 1)
+                    setstat('bpilot', (s['bpilot']) -(1*(s['numasas']+s['pesadoasa']+s['medioasa'])))
+                    y = "Uma asa!"
 
         case "P" | "p": #pesado
             setstat('hp', s['hp'] -12)
@@ -380,23 +404,34 @@ def hitnave(intensidade): #acertos de inimigos
                     setstat('pesadoprop', s['pesadoprop']+ 1)
                     setstat('danopropulsores', True)
                     k = rand()%6
-                    if k == 6:
+                    if k == 6 and s['numprops'] < 9:
                         setstat('novoprop', 1)
-                    setstat('bvelmax', (s['bvelmax']) -(1*(s['numprop']+s['pesadoprop'])))
-                    y = "Propulsor"
+                    setstat('bvelmax', (s['bvelmax']) -(1*(s['numprops']+s['pesadoprop'])))
+                    y = "Um dos propulsores"
                 case 7|9:
                     pass
         case "M" | "m":
             setstat('hp', s['hp'] -8)
             z = str("médio")
             c = 0
+            m = rand()%10
+            match m:
+                case 0|8:
+                    pass
+                case 9:
+                    setstat('danoasa', True)
+                    k = rand()%6
+                    if k == 6 and s['numasas']<4:
+                        setstat('novaasa', 1)
+                    setstat('bpilot', (s['bpilot']) -(1*(s['numasas']+s['pesadoasa']+s['medioasa'])))
+                    y = "Uma asa!"
         case _:
             setstat('hp', s['hp'] -8)
             z = ""
             c += 1
             #setstat('foo', s['foo'] + 1)
     if c < 2:
-        print(f"{y} foi atingido por um tiro {z}!")
+        print(f"{y} levou um tiro {z}!")
     if intensidade == "r" or intensidade == "R":
         b = rand()%3
         y = "Algo"
@@ -436,19 +471,25 @@ def hitnave(intensidade): #acertos de inimigos
 
 #ações players
 def conserto(lugar):
-    if lugar == 'prop':
-        setstat('numprop', s['numprop'] -1)
-        setstat('bvelmax', s['bvelmax'] + (1*(1+s['pesadoprop'])))
-        if s['numprop'] <= 0:
-            setstat('danoprop', False)
-    if lugar == 'grav':
-        setstat('bmobil', s['bmobil']+s['rodssemgrav']*2)
-        setstat('bcover', s['bcover']+s['rodssemgrav']*1)
-        setstat('rodssemgrav', 0)
-        setstat('danograv', False)
-    if lugar == 'crio':
-        setstat('brolls', s['brolls'] + 1)
-        setstat('danocrio', False)
+    match lugar:
+        case 'prop':
+            setstat('numprops', s['numprops'] -1)
+            setstat('bvelmax', s['bvelmax'] + (1*(1+s['pesadoprop'])))
+            if s['numprops'] <= 0:
+                setstat('danoprop', False)
+        case 'grav':
+            setstat('bmobil', s['bmobil']+s['rodssemgrav']*2)
+            setstat('bcover', s['bcover']+s['rodssemgrav']*1)
+            setstat('rodssemgrav', 0)
+            setstat('danograv', False)
+        case 'crio':
+            setstat('brolls', s['brolls'] + 1)
+            setstat('danocrio', False)
+        case 'geradorescudo':
+            setstat('genescudo', True)
+        case 'comms':
+            setstat('podeusarcomms', True)
+
 
 #while s['gameon'] == 1:
 if s['foo'] > 1 or s['foo'] <= 0:
@@ -458,26 +499,23 @@ if s['foo'] > 1 or s['foo'] <= 0:
 
 #end of round
 def genescudo():
-    setstat('escudoefetivof', s['escudof'] + s['bescudo'])
-    setstat('escudoefetivot', s['escudot'] + s['bescudo'])
+    if s['genescudo'] == True:
+        setstat('escudoefetivof', s['escudof'] + s['bescudo'])
+        setstat('escudoefetivot', s['escudot'] + s['bescudo'])
 
-
-import random
-for x in range(1, 20):
-    setdirect(random.randint(1,3))
-    setmodo(random.randint(1,5))
-    y = random.randint(0, 2)
-    if y == 0:
-        flip()
-    updater()
-    genescudo()
-    print(f'f: {s['escudoefetivof']}, t: {s['escudoefetivot']}, bescudo: {s['bescudo']}, modo: {s['modo']}, direct: {s['direct']}, overclock: {s['overclock']}')
+def inventorycheck():
+    if inventory.count() > 18:
+        for x in inventory.count() not in range(1, 19)
+            inventory.pop(x)
 
 def danos():
     rodssemgrav = max(s['rodssemgrav'], 5)
     danograv = s['danograv']
     danocrio = s['danocrio']
-    danocomms = s['danocomms']
+    danocomms = s['podeusarcomms']
+    danoescudo = s['geradorescudo']
+    danohangar = s['danohangar']
+    danoasa = s['danoasa']
     if danograv == True:
         setstat('rodssemgrav', s['rodssemgrav'] +1)
         setstat('bmobil', (s['bmobil']) -2)
@@ -491,18 +529,37 @@ def danos():
         if desmaio < 5:
             setstat('criodesmaio', min(desmaio - int(~int(danocrio)), 5))
     if danocomms == True:
-        setstat('podeusarcomms', False)
         print("Sistema de Comunicações danificado!")
-    if danocomms == False:
-        setstat('podeusarcomms', True)
+    if danoescudo == True:
+        print("Falha no Gerador de Escudos!")
     if danomotor == True:
         if falhamotor == True:
             pass
         else:
             pass
     if danopropulsores == True:
-        if novoprop == 1:
-            setstat('numprop', s['numprop']+1)
+        if novoprop == 1 and s['numprops'] != 9:
+            setstat('numprops', max(s['numprops']+1, 9))
             print('Um novo propulsor foi danificado!')
             setstat('novoprop', 0)
         print("Propulsores danificados!")
+    depressurização = s['depressurização']
+    if danohangar == True:
+        setstat('depressurização', max(s['depressurização'] -1, 0))
+        print(f"Brecha no Microhangar! \n Depressurização em {depressurização} rodadas!")
+    if danohangar == False:
+        if depressurização < 3:
+            setstat('depressurização', min(depressurização - int(~int(danohangar)), 3))
+    if depressurização >= 0:
+        setstat('hangarselado', True)
+    if danoasa == True
+        if novaasa == 1 and s['numprops'] != 4:
+            setstat('numasas', max(s['numasas']+1, 4))
+            print('Uma nova asa foi danificada!')
+            setstat('novoprop', 0)
+        if s['numasas'] == 1:
+            print("Asa Danificada!")
+        elif s['numasas'] > 1:
+            print("Asas danificadas!")
+    if danoarmazém == True
+        del inventory[rand%18]
