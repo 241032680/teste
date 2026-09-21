@@ -7,10 +7,11 @@ def ceil(a, b):
 
 #função de randomização
 #Xn+1 = (aXn + c) mod mod (segundo a wikipedia)
-#sem IA essa bomba foi na raça
+#foi de uma monstruosidade de 70 linhas pra uma beleza de 12 quando descobri o mundo magico do id()
+
 
 r = {}
-def setrand(num, val)
+def setrand(num, val):
     r[num] = val
 def lcg(Xn, a, c, m, n): 
     resultados = []
@@ -19,76 +20,18 @@ def lcg(Xn, a, c, m, n):
         resultados.append(Xn)
     return resultados
 def rand():
-    z = r['z']
-    y = 1
-    t = (int(s['crio']) ^ int(s['sonar']) ^ int(s['grav']) ^ int(s['radio']) ^ s['escudo'])
-    j = (int(s['crio']) & int(s['sonar']) & int(s['grav']) & int(s['radio']) & s['escudo'])
-    k = (int(s['crio']) | int(s['sonar']) | int(s['grav']) | int(s['radio']) | s['escudo'])
-    setstat('d', r['d'])
-    if r['d']<0:
-        setstat('d', ceil(r['d'], -1))
-    setstat('a', r['a'] + int(s['crio']) + int(s['sonar']) + int(s['grav']) + int(s['radio']) + s['escudo'])
-    setstat('b', r['b'] + int(s['crio']) + int(s['sonar']) + int(s['grav']) + int(s['radio']) + s['hp'])
-    seedgen = lcg (((r['a']+r['d'])**2)&(r['d']), 1103515245, 12345+r['d'], (2**31), n=100)
-    pos = lcg (r['b'], 1103515245, int(12345+((s['overclock']|s['sonar'])*(r['d'])^(r['d']**(s['direct'])))), (2**31+1), n=100)
-    for _ in pos:
-        y = len(str(_))
-        z = (z+(r['z'])+y+modo+((b['btorp']%4)+1)%2048)
-        if z <= 0:
-            z = (lcg(ceil(z, -1), 1103515245, 12345+r['d']+r['a']+s['av']-k+j+t, (2**31), n=1)[0])
-        setstat('z', ((z%997)+1))
-    pos = (pos[z%100]%99)+1
-    seed = int((seedgen[pos]%999998) +1)
-    lista = lcg(seed+(b['bfront']-r['d']%6), 1103515245, 12345+s['turnos']+s['rods'], (2**31-1), n=100)
-    f = lista[(pos%((seed%pos)+1)+1)]%(((r['a']*r['b'])%z)+1)
-    #mais randomização
-    seedgen = seed + (lcg(f, 1103515245, 12345+((y%8)+1), (2**16), n=1)[0])
-    if f%10 > 4 or int(r['d']%64) > 22:
-        setstat('d', (((r['a']|r['b'])<<1)%8092)+1)
-        setstat('z', (r['a']+((r['b']^((y+1)//(s['torpedos']+1)))%1024)+1))
-        setstat('b', (b['bvelmax']&b['bescudo']|b['btorp']%2048)+1)
-        setstat('a', b['baae']+(z^y)+1)
-    if [(z ^ y) and r['a']|r['b'] >= seedgen&pos] or seedgen<<(s['sonar']^s['grav']^s['hp']^(~b['baae'])) <= 69420:
-        setstat('a', ((r['a']-69)%69)+1)
-        setstat('b', ((r['b']-420)%69)+1)
-        setstat('z', ((r['z']-67)%69)+1)
-        setstat('d', ((r['d']-42)%69)+1)
-    if  (r['d']<<1) < (int((r['z']>>5)) ** ((((~(b['bescudo'])+(s['direct'])>>1)))%3)+1):
-        setstat('d', (((r['a']|s['velmax'])<<1)%8092)+1)
-        setstat('z', (r['d']+((f^((b['bpilot']+1)*(b['butil']+1)))%1024)+1))
-        setstat('b', (r['b']&s['escudo']|s['hp']%2048)+1)
-    if r['a'] ^ r['b'] < 4096:
-        setstat('a', r['a']+(r['a']^r['b'])+1)
-        setstat('z', r['z']+((r['a']%255)+1))
-        setstat('d', (((r['d']^y)%r['d'])+1))
-    if f%10 in range(1, 4):
-        setstat('d', r['d']+1)
-        setstat('a', r['a']+3)
-        setstat('b', r['b']+2)
-        setstat('z', r['z']+ ((r['a'] ^ r['b'] ^ r['d'])+1))
-    elif f%10 in range(4, 8):
-        setstat('d', r['d']+2)
-        setstat('a', r['a']+1)
-        setstat('b', r['b']+3)
-        setstat('z', r['z'] + ((r['a'] | r['b'] | r['d'])+1))
-    elif f%10 in range(8, 10):
-        setstat('d', r['d']+3)
-        setstat('a', r['a']+2)
-        setstat('b', r['b']+1)
-        setstat('z', r['z'] + ((r['a'] & r['b'] & r['d'])+1))        
-    elif f%10 == 0:
-        setstat('d', (r['d']%512)+4)
-        setstat('a', ((z*(int(s['crio'])+1) * int(s['sonar']) + int(s['grav']) + (int(s['radio'])))**((r['a']*r['b'])%999998)+1))
-        setstat('b', ((((z+y+r['a']+r['b']+modo)&((r['b']+r['a'])*(int(s['sonar'])+1)))%255)+1))
-        setstat('z', (r['z'] + (((((r['a'] & r['b'] & r['d'])+1) - ((~((r['a'] ^ r['b'] ^ r['d'])+1)))%1987)+1) + (((r['a']*r['b'])%32)+1))))
-    else:
-        setstat('d', 404)
-        setstat('a', 101)
-        setstat('b', 303)
-    setstat('d', r['d']+1)  
-    setstat('a', r['a']+1)
-    setstat('b', r['b']+1)
-    setstat('z', r['z']+1)
+    def rand():
+    rand = r['z']
+    index = r['a']
+    b = r['b']
+    d = r['d']
+    f = lcg((id(rand)), (1103515244+d%9999999999), (12344+b)%9999999, 2**31, 1024)
+    index = id(b)%(769) + 255
+    setrand('z', (rand+b) | (d+index))
+    setrand('a', (rand+b) & (d+index))
+    setrand('b', (rand+b) ^ (d+index))
+    setrand('d', (id(f)+id(b)) ^ (id(d)+id(index)))
+    return f[index]
     return f ^ (f >> 16)
 
 #função seno
@@ -110,6 +53,7 @@ def avg(list):
 s = {}
 f = {}
 n = {}
+b = {}
 
 #começando a separar por causa do display/GUI, talvez desnecessário com método...
 def setstat(nome, valor):
@@ -120,6 +64,7 @@ def setbuff(buff, valor):
     b[buff] = valor
 def setbase(stat, valor):
     n[stat] = valor
+
 
 
 #stats nave
@@ -202,7 +147,7 @@ def updater(): #update stats
     setbuff('btorp', s['torpbase'] + b['btorp'])
     setstat('util', s['utilbase'] + b['butil'])
     setstat('pilot', s['pilotbase'] + b['bpilot'])
-    setstat('rolls', s['rollsbase']+ s['brolls'])
+    setstat('rolls', s['rollsbase']+ b['brolls'])
     setstat('cover', s['coverbase'] + b['bcover'])
     
 #distribuição de escudo
@@ -365,21 +310,21 @@ armazém('caixa de madeira', 90)
 #itens de cura
 print(a)
 print(s)
-def medbay(nome, valor, tipo)
+def medbay(nome, valor, tipo):
     m[nome.capitalize()] = valor
     m['Tipo:'] = tipo.capitalize()
 
 #cozinha (12 slots)
 #itens de cura, rango e alguns valiosos
 
-def cozinha(nome, valor, tipo)
+def cozinha(nome, valor, tipo):
     c[nome.capitalize()] = valor
     c['Tipo:'] = tipo.capitalize()
 
 #sala comum (6 slots)
 #itens pessoais de players, o que não couber em outros espaçoes
 
-def salacomum(nome, valor, tipo)
+def salacomum(nome, valor, tipo):
     w[nome.capitalize()] = valor
     w['Tipo:'] = tipo.capitalize()
 
@@ -388,7 +333,7 @@ def salacomum(nome, valor, tipo)
 #utilbase(1,0,1,0)
 #utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
 
-#print(b['bmobil'], b['bmira'], b['bpercep'], b['bpilot'],b['butil'], b['btorp'], b['baae'], b['bfront'], b['bvelmax'], s['brolls'],b['bcover'], b['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
+#print(b['bmobil'], b['bmira'], b['bpercep'], b['bpilot'],b['butil'], b['btorp'], b['baae'], b['bfront'], b['bvelmax'], b['brolls'],b['bcover'], b['bescudo'],s['podeusartorpedo'], s['podeusarcomms'])
 
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
@@ -408,12 +353,12 @@ def hitnave(intensidade): #acertos de inimigos
                 setstat('hp', s['hp'] -5)
             z = str("leve")
             a = (rand()%12)
-            if 
+            #if 
             match a:
                 case 0:
                     utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
                     setstat('danocrio', True)
-                    setbuff('brolls', s['brolls'] - 1)
+                    setbuff('brolls', b['brolls'] - 1)
                     y = "Criogênicos"
                 case 1:
                     setstat('danograv', True)
@@ -545,7 +490,7 @@ def conserto(lugar):
             setstat('rodssemgrav', 0)
             setstat('danograv', False)
         case 'crio':
-            setbuff('brolls', s['brolls'] + 1)
+            setbuff('brolls', b['brolls'] + 1)
             setstat('danocrio', False)
         case 'geradorescudo':
             setstat('genescudo', True)
@@ -554,7 +499,7 @@ def conserto(lugar):
 
 
 #while s['gameon'] == 1:
-if s['foo'] > 1 or s['foo'] <= 0:
+if f['foo'] > 1 or f['foo'] <= 0:
     setfoo('foo', 1)
 
 
@@ -632,20 +577,46 @@ def danos():
 
 
 
-#inimigo, falta fazer a função
+#inimigo
 
-i = {
-  "1": {
-  "tipo": "leve",
-  "hp" : int((10 + (sin(rand()))*2.22) + 0.5),
-  "velocidade": 6,
-  "mísseis" : rand()%2,
-  "escudo": 3,
-  "tipo de missel": tipomissel(),
-  "tipo de escudo": tipoescudo(),
-  "tipo de dano": tipodano(),
+def criarinimigo(tipo):
+  n = len(inimigos)
+  inimigos[f'i{(n+1)}'] = {
+  "tipo" : tipo,
+  "hp" : 30 + float(((sin(rand()))*6.66)),
   }
+
+i1 = {
+    "tipo de inimigo": "leve",
+    "hp" : int((30 + (sin(rand()))*6.66)),
+    "velocidade": 6,
+    "mísseis" : rand()%2,
+    "escudo": 10,
+    #"tipo de missel": tipomissel(),
+    #"tipo de escudo": tipoescudo(),
+    #"tipo de dano": tipodano(),
+  }
+
+i2 = {
+  "tipo" : "medio",
+  "hp" : 80
 }
+
+i3 = {
+  "tipo" : "pesado",
+  "hp" : 120
+}
+
+inimigos = {
+  "i1" : i1,
+  "i2" : i2,
+  "i3" : i3
+} 
+
+
+
+
+print(f'\n \n {"1"} in {i}')
 
 #tipos de escudo/casco recebem resistencias e danos diferentes de tipos de tiro diferentes
 
@@ -698,10 +669,11 @@ def tipomissel():
                 case 3:
                     return "Goliath"
         case 1: #torpedos
-
+            pass
         case 2: #bombas
+            pass
         case 3: #foguetes
-
+            pass
 #inimigos
 
 #[1 2 3 4...]
