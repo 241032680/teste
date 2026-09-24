@@ -380,35 +380,36 @@ def utilbase(crio, sonar, radio, grav): #utilitários
 #quanto mais itens chegarem no checkpoint final, melhor o score
 #varias mecanicas fazem os itens perderem valor
 
-a = {}
-c = {}
-m = {}
-w = {}
-def armazém(nome, valor):
-    a[nome.upper()] = valor
+armazém = {}
+cozinha = {}
+medbay = {}
+salacomum = {}
 
-armazém('caixa de madeira', 90)
+def arm(nome, valor):
+    armazém[nome.upper()] = valor
+
+#armazém('caixa de madeira', 90)
 
 
 #medbay (12 slots)
 #itens de cura
-def medbay(nome, valor, tipo):
-    m[nome.capitalize()] = valor
-    m['Tipo:'] = tipo.capitalize()
+def med(nome, valor, tipo):
+    medbay[nome.upper()] = valor
+    medbay['Tipo:'] = tipo.capitalize()
 
 #cozinha (12 slots)
 #itens de cura, rango e alguns valiosos
 
-def cozinha(nome, valor, tipo):
-    c[nome.capitalize()] = valor
-    c['Tipo:'] = tipo.capitalize()
+def coz(nome, valor, tipo):
+    cozinha[nome.capitalize()] = valor
+    cozinha['Tipo:'] = tipo.capitalize()
 
 #sala comum (6 slots)
 #itens pessoais de players, o que não couber em outros espaçoes
 
-def salacomum(nome, valor, tipo):
-    w[nome.capitalize()] = valor
-    w['Tipo:'] = tipo.capitalize()
+def sala(nome, valor, tipo):
+    salacomum[nome.capitalize()] = valor
+    salacomum['Tipo:'] = tipo.capitalize()
 
 
 
@@ -455,7 +456,8 @@ def hitnave(intensidade): #acertos de inimigos
                     pass
                 case 6:
                     setstat('danoquartos', True)
-                    setstat('numquartos', s['numquartos']+1)
+                    setfoo('quarto', rand()%6)
+                    setfoo('numquartos', f['numquartos']+1)
                     y = "Um dos quartos"
                 case 7:
                     setstat('podeusarcomms', False)
@@ -559,7 +561,42 @@ def conserto(lugar):
             setstat('genescudo', True)
         case 'comms':
             setstat('podeusarcomms', True)
-
+        case 'quarto1':
+            setfoo('quarto1dano', False)
+            setfoo('numquartos', f['numquartos'] - 1)
+            if f['numquartos'] <=0:
+                setfoo('quarto',-1)
+                setfoo('numquartos', 0)
+        case 'quarto2':
+            setfoo('quarto2dano', False)
+            setfoo('numquartos', f['numquartos'] - 1)
+            if f['numquartos'] <=0:
+                setfoo('quarto',-1)
+                setfoo('numquartos', 0) 
+        case 'quarto3':
+            setfoo('quarto3dano', False)
+            setfoo('numquartos', f['numquartos'] - 1)
+            if f['numquartos'] <=0:
+                setfoo('quarto',-1)
+                setfoo('numquartos', 0)
+        case 'quarto4':
+            setfoo('quarto4dano', False)
+            setfoo('numquartos', f['numquartos'] - 1)
+            if f['numquartos'] <=0:
+                setfoo('quarto',-1)
+                setfoo('numquartos', 0)
+        case 'quarto5':
+            setfoo('quarto5dano', False)
+            setfoo('numquartos', f['numquartos'] - 1)
+            if f['numquartos'] <=0:
+                setfoo('quarto',-1)
+                setfoo('numquartos', 0)
+        case 'salacomum':
+            setfoo('danosalacomum', False)
+            setfoo('numquartos', f['numquartos'] - 1)
+            if f['numquartos'] <=0:
+                setfoo('quarto',-1)
+                setfoo('numquartos', 0)
 #end of round
 def genescudo():
     if s['genescudo'] == True:
@@ -630,6 +667,29 @@ def danos():
             print("Asas danificadas!")
     if danoarmazém == True:
         armazém.pop(rand%18)
+    if danomedbay == True:
+        medbay.pop(rand%12)
+    if danocozinha == True:
+        cozinha.pop(rand%12)
+    if danosalacomum == True:
+        if f['salacomum'] or f['quarto'] == 0:
+            salacomum.pop(rand%6)
+            setfoo('salacomum', True)
+        if f['quarto1dano'] or f['quarto'] == 1:
+            quarto1.pop(rand%6)
+            setfoo('quarto1dano', True)
+        if f['quarto2dano'] or f['quarto'] == 2:
+            quarto2.pop(rand%6)
+            setfoo('quarto2dano', True)
+        if f['quarto3dano'] or f['quarto'] == 3:
+            quarto3.pop(rand%6)
+            setfoo('quarto3dano', True)
+        if f['quarto4dano'] or f['quarto'] == 4:
+            quarto4.pop(rand%6)
+            setfoo('quarto4dano', True)
+        if f['quarto5dano'] or f['quarto'] == 5:
+            quarto5.pop(rand%6)
+            setfoo('quarto5dano', True)
 
 def overclock():
     if s['motorquente']:
@@ -759,6 +819,81 @@ def tipomissel():
 #antes do while:
 #-gerar inimigos, inventario, mapa, display e gerenciar inputs
 
+for x in range(1, 19):
+    arm(str(x), rand()%90)
+print(armazém)
+print(len(armazém))
+
+setfoo('turnosatuais', 0)
+
+import curses
+
+import curses #biblioteca endemoniada
+
+menu = ['Piloto', 'Copiloto', 'Engenheiro', 'Atirador', 'Atirador AAE', 'Desligar Jogo']
+#o nome faz juz, essa bomba é amaldiçoada mesmo, roubei esse menu do Indian Pythonista
+#adaptei pra ser horizontal e tentei fazer um ascii
+#ultima opçao vai virar "confirmar ações na versao final
+def print_menu(stdscr, selected_col_idx):
+    stdscr.clear()
+    h, w = stdscr.getmaxyx() #tela
+    espaço = 3
+    ar = 2
+    botaotamanho = [len(col) + ar * 2 for col in menu]
+    menutamanho = sum(botaotamanho) + espaço * (len(menu) - 1)
+    x = (w - menutamanho) // 2
+    y = h - 4
+    for idx, col in enumerate(menu):
+        botaolargura = botaotamanho[idx]
+        stdscr.addstr(y+1, x, "┌" + "─" * (botaolargura - 2) + "┐") #aresta de cima
+        text = col.center(botaolargura - 2) #texto
+        if idx == selected_col_idx:
+            stdscr.attron(curses.color_pair(1))
+        stdscr.addstr(y + 2, x, "│" + text + "│") #borda
+        if idx == selected_col_idx:
+            stdscr.attroff(curses.color_pair(1))
+        stdscr.addstr(y + 3, x, "└" + "─" * (botaolargura - 2) + "┘") #aresta de baixo
+        x += botaolargura + espaço
+    stdscr.refresh()
+
+
+def print_center(stdscr, text):
+    stdscr.clear()
+    h, w = stdscr.getmaxyx()
+    x = w // 2 - len(text) // 2
+    y = h // 2
+    stdscr.addstr(y, x, text)
+    stdscr.refresh()
+
+
+def main(stdscr):
+    # Turn off cursor blinking
+    curses.curs_set(0)
+    # Color scheme for selected column
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    # Specify the current selected column
+    current_col = 0
+    # Print the menu
+    print_menu(stdscr, current_col)
+    while 1:
+        key = stdscr.getch()
+        if key == curses.KEY_LEFT and current_col > 0:
+            current_col -= 1
+        elif key == curses.KEY_RIGHT and current_col < len(menu) - 1:
+            current_col += 1
+        elif key == curses.KEY_ENTER or key in [10, 13]:
+            print_center(
+                stdscr,
+                "You selected '{}'".format(menu[current_col])
+            )
+            stdscr.getch()
+            # If user selected last column, exit the program
+            if current_col == len(menu) - 1:
+                setfoo('gameon', 0)
+                break
+        print_menu(stdscr, current_col)
+
+
 while f['gameon'] == 1:
     updater()
     if f['foo'] > 1 or f['foo'] <= 0:
@@ -771,8 +906,11 @@ while f['gameon'] == 1:
         #[coisas dentro do turno]
         setfoo('turnosatuais', f['turnosatuais'] + 1)
     setfoo('rods', f['rods']+1)
-    
+    curses.wrapper(main)
+
 #criar função pra ler input e output
 #criar cli bonitinha
 #tabs 1 2 3 4 5 com ações de cada player, quando todas escolhidas, turno dos inimigos
 #calculo e ajustes, repete
+
+
