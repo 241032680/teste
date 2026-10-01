@@ -1,3 +1,12 @@
+import time
+
+def timer(frames):
+    while frames:
+        secs, totframes = divmod(frames, 50)
+        timer = str(f'{secs, totframes}')
+        time.sleep((1/50))
+        frames -= 1
+
 #arrendondar pra cima
 #ceil (5, 2)
 #print (ceil (5, 2))
@@ -693,9 +702,15 @@ def danos():
 
 def overclock():
     if s['motorquente']:
-        setstat('riscomotor', s['riscomotor'] -1)
+        if s['overclock'] == True:
+            setstat('riscoverclock', max(s['riscoverclock'] + 1,4))
+        else:
+            setstat('riscoverclock', max(s['riscoverclock'], s['riscoverclock' -1]))
+        setstat('riscomotor', s['riscoverclock'])
         #marchas: 1/9, 1/6, 1/3
         #oclock: +¼ por rod 
+    else:
+        setstat('riscomotor', s['riscomotor']-s['riscoverclock'])
 def eor():
     inventorycheck()
     genescudo()
@@ -706,6 +721,8 @@ def eor():
 #inimigo
 
 def criarinimigo(tipo):
+  if len(inimigos) > 10:
+    return 0
   n = len(inimigos)
   inimigos[f'i{(n+1)}'] = {
   "tipo" : tipo,
@@ -822,29 +839,28 @@ def tipomissel():
 for x in range(1, 19):
     arm(str(x), rand()%90)
 print(armazém)
-print(len(armazém))
+print(len(armazém)) 
 
 setfoo('turnosatuais', 0)
 
-import curses
 
 import curses #biblioteca endemoniada
 
-menu = ['Piloto', 'Copiloto', 'Engenheiro', 'Atirador', 'Atirador AAE', 'Desligar Jogo']
+menu = ['Piloto', 'Copiloto', 'Engenheiro', 'Atirador', 'Atirador AAE', 'Confirmar Ações', 'Desligar Jogo']
 #o nome faz juz, essa bomba é amaldiçoada mesmo, roubei esse menu do Indian Pythonista
 #adaptei pra ser horizontal e tentei fazer um ascii
-#ultima opçao vai virar "confirmar ações na versao final
+
 def print_menu(stdscr, selected_col_idx):
     stdscr.clear()
     h, w = stdscr.getmaxyx() #tela
-    espaço = 3
-    ar = 2
-    botaotamanho = [len(col) + ar * 2 for col in menu]
-    menutamanho = sum(botaotamanho) + espaço * (len(menu) - 1)
-    x = (w - menutamanho) // 2
-    y = h - 4
+    gap = 2 #entre botões
+    espaçamento = 1 #entre texto e retângulo
+    largura_botao = [len(palavra) + (espaçamento*2) for palavra in menu]
+    menutamanho = sum(largura_botao) + (gap * (len(menu) - 1))
+    x = 1 #posição inicial horizontal
+    y = h - 4 #posição inicial vertical
     for idx, col in enumerate(menu):
-        botaolargura = botaotamanho[idx]
+        botaolargura = largura_botao[idx]
         stdscr.addstr(y+1, x, "┌" + "─" * (botaolargura - 2) + "┐") #aresta de cima
         text = col.center(botaolargura - 2) #texto
         if idx == selected_col_idx:
@@ -853,7 +869,7 @@ def print_menu(stdscr, selected_col_idx):
         if idx == selected_col_idx:
             stdscr.attroff(curses.color_pair(1))
         stdscr.addstr(y + 3, x, "└" + "─" * (botaolargura - 2) + "┘") #aresta de baixo
-        x += botaolargura + espaço
+        x += botaolargura + gap
     stdscr.refresh()
 
 
@@ -882,15 +898,35 @@ def main(stdscr):
         elif key == curses.KEY_RIGHT and current_col < len(menu) - 1:
             current_col += 1
         elif key == curses.KEY_ENTER or key in [10, 13]:
-            print_center(
-                stdscr,
-                "You selected '{}'".format(menu[current_col])
-            )
-            stdscr.getch()
             # If user selected last column, exit the program
+            teste = True
             if current_col == len(menu) - 1:
                 setfoo('gameon', 0)
                 break
+            elif current_col == len(menu) - 2:
+                def confirmar_acao():
+                    pass
+                print_center(stdscr,"Ações Confirmadas".format(menu[current_col]))
+                stdscr.getch()
+                teste = False
+            elif current_col == len(menu) - 3:
+                def atirador_aae():
+                    pass    
+            elif current_col == len(menu) - 4:
+                def atirador():
+                    pass
+            elif current_col == len(menu) - 5:
+                def engenheiro():
+                    pass
+            elif current_col == len(menu) - 6:
+                def copiloto():
+                    pass            
+            elif current_col == len(menu) - 7:
+                def piloto():
+                    pass            
+            if teste:
+                print_center(stdscr, "You selected '{}'".format(menu[current_col]))
+                stdscr.getch()
         print_menu(stdscr, current_col)
 
 
