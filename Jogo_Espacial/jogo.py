@@ -218,6 +218,11 @@ setfoo('numasas', 0) #numero de asas DANIFICADAS, numero de asas na nave é 4
 setfoo('numprops', 0) #mesma coisa das asas mas pra propulsores
 setfoo('pesadoasa', 0)
 setfoo('medioasa', 0)
+setfoo('quarto1dano', False)
+setfoo('quarto2dano', False)
+setfoo('quarto3dano', False)
+setfoo('quarto4dano', False)
+setfoo('quarto5dano', False)
 
 #tipos de dano
 settipo('tipoaae', 1)
@@ -393,6 +398,11 @@ armazém = {}
 cozinha = {}
 medbay = {}
 salacomum = {}
+quarto1 = {}
+quarto2 = {}
+quarto3 = {}
+quarto4 = {}
+quarto5 = {}
 
 def arm(nome, valor):
     armazém[nome.upper()] = valor
@@ -420,7 +430,27 @@ def sala(nome, valor, tipo):
     salacomum[nome.capitalize()] = valor
     salacomum['Tipo:'] = tipo.capitalize()
 
+#Quartos (4 slots)
 
+def quarto1(nome, valor, tipo):
+    quarto1[nome.capitalize()] = valor
+    quarto1['Tipo:'] = tipo.capitalize()
+
+def quarto2(nome, valor, tipo):
+    quarto2[nome.capitalize()] = valor
+    quarto2['Tipo:'] = tipo.capitalize()
+
+def quarto3(nome, valor, tipo):
+    quarto3[nome.capitalize()] = valor
+    quarto3['Tipo:'] = tipo.capitalize()
+
+def quarto4(nome, valor, tipo):
+    quarto4[nome.capitalize()] = valor
+    quarto4['Tipo:'] = tipo.capitalize()
+
+def quarto5(nome, valor, tipo):
+    quarto5[nome.capitalize()] = valor
+    quarto5['Tipo:'] = tipo.capitalize()
 
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
@@ -554,8 +584,6 @@ def conserto(lugar):
         case 'prop':
             setstat('numprops', s['numprops'] -1)
             setbuff('bdvelmax', b['bdvelmax'] + (1*(1+f['pesadoprop'])))
-            if s['numprops'] <= 0:
-                setstat('danoprop', False)
         case 'grav':
             setbuff('bdmobil', b['bdmobil']+s['rodssemgrav']*2)
             setbuff('bdcover', b['bdcover']+s['rodssemgrav']*1)
@@ -564,8 +592,6 @@ def conserto(lugar):
         case 'crio':
             setbuff('bdrolls', b['bdrolls'] + (1*f['hitcrio']))
             setfoo('hitcrio', f['hitcrio'] -1)
-            if f['hitcrio'] <=0:
-                setstat('danocrio', False)
         case 'geradorescudo':
             setstat('genescudo', True)
         case 'comms':
@@ -606,6 +632,12 @@ def conserto(lugar):
             if f['numquartos'] <=0:
                 setfoo('quarto',-1)
                 setfoo('numquartos', 0)
+    if s['numprops'] <= 0:
+        setstat('danoprop', False)
+    if f['quarto'] == -1 and f['numquartos'] <= 0:
+        setstat('danosalacomum', False)
+    if f['hitcrio'] <=0:
+        setstat('danocrio', False)
 #end of round
 def genescudo():
     if s['genescudo'] == True:
@@ -621,6 +653,16 @@ def inventorycheck():
       medbay.popitem
     while len(salacomum) > 6:
       salacomum.popitem
+    while len(quarto1) > 4:
+      quarto1.popitem
+    while len(quarto2) > 4:
+      quarto2.popitem
+    while len(quarto3) > 4:
+      quarto3.popitem
+    while len(quarto4) > 4:
+      quarto4.popitem
+    while len(quarto5) > 4:
+      quarto5.popitem
 def danos():
     rodssemgrav = max(s['rodssemgrav'], 5)
     danograv = s['danograv']
@@ -629,6 +671,8 @@ def danos():
     danoescudo = s['geradorescudo']
     danohangar = s['danohangar']
     danoasa = s['danoasa']
+    danoquartos = s['danoquartos']
+    danopropulsores = s['danopropulsores']
     if danograv == True:
         setstat('rodssemgrav', s['rodssemgrav'] +1)
         setbuff('bmobil', (b['bmobil']) -2)
@@ -651,7 +695,7 @@ def danos():
         else:
             pass
     if danopropulsores == True:
-        if novoprop == 1 and s['numprops'] != 9:
+        if s['novoprop'] == 1 and s['numprops'] != 9:
             setstat('numprops', max(s['numprops']+1, 9))
             print('Um novo propulsor foi danificado!')
             setstat('novoprop', 0)
@@ -666,7 +710,7 @@ def danos():
     if depressurização >= 0:
         setstat('hangarselado', True)
     if danoasa == True:
-        if novaasa == 1 and s['numprops'] != 4:
+        if s['novaasa'] == 1 and s['numprops'] != 4:
             setstat('numasas', max(f['numasas']+1, 4))
             print('Uma nova asa foi danificada!')
             setstat('novoprop', 0)
@@ -680,7 +724,7 @@ def danos():
         medbay.pop(rand%12)
     if danocozinha == True:
         cozinha.pop(rand%12)
-    if danosalacomum == True:
+    if danoquartos == True:
         if f['salacomum'] or f['quarto'] == 0:
             salacomum.pop(rand%6)
             setfoo('salacomum', True)
