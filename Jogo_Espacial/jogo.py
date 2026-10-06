@@ -888,90 +888,172 @@ print(len(armazém))
 setfoo('turnosatuais', 0)
 
 
-import curses #biblioteca endemoniada
+import curses
+from dataclasses import dataclass, field
+from typing import Callable, List, Optional
 
-menu = ['Piloto', 'Copiloto', 'Engenheiro', 'Atirador', 'Atirador AAE', 'Confirmar Ações', 'Desligar Jogo']
-#o nome faz juz, essa bomba é amaldiçoada mesmo, roubei esse menu do Indian Pythonista
-#adaptei pra ser horizontal e tentei fazer um ascii
+#sentinels
+EXIT = object()   # propagates up → quit
+BACK = object()   # close this level, return to parent
 
-def print_menu(stdscr, selected_col_idx):
-    stdscr.clear()
-    h, w = stdscr.getmaxyx() #tela
-    gap = 2 #entre botões
-    espaçamento = 1 #entre texto e retângulo
-    largura_botao = [len(palavra) + (espaçamento*2) for palavra in menu]
-    menutamanho = sum(largura_botao) + (gap * (len(menu) - 1))
-    x = 1 #posição inicial horizontal
-    y = h - 4 #posição inicial vertical
-    for idx, col in enumerate(menu):
-        botaolargura = largura_botao[idx]
-        stdscr.addstr(y+1, x, "┌" + "─" * (botaolargura - 2) + "┐") #aresta de cima
-        text = col.center(botaolargura - 2) #texto
-        if idx == selected_col_idx:
-            stdscr.attron(curses.color_pair(1))
-        stdscr.addstr(y + 2, x, "│" + text + "│") #borda
-        if idx == selected_col_idx:
-            stdscr.attroff(curses.color_pair(1))
-        stdscr.addstr(y + 3, x, "└" + "─" * (botaolargura - 2) + "┘") #aresta de baixo
-        x += botaolargura + gap
-    stdscr.refresh()
+#data model
+@dataclass
+class opt:
+    label:   str
+    submenu: List["opt"]   = field(default_factory=list)
+    action:  Optional[Callable] = None   # (stdscr) → EXIT | BACK | None
 
+#micro action
+def exit_action(_): return EXIT
+def back_action(_): 
+    if f['turnosatuais'] == 3: 
+        return BACK 
 
-def print_center(stdscr, text):
+def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
-    x = w // 2 - len(text) // 2
-    y = h // 2
-    stdscr.addstr(y, x, text)
+
+    if draw_extras:
+        draw_extras(stdscr)
+
+    gap = 2
+    espaçamento = 1
+    button_widths = [len(item.label) + (espaçamento * 2) for item in items]
+    x = 1
+    y = h - 4
+
+    for idx, item in enumerate(items):
+        bw   = button_widths[idx]
+        text = item.label.center(bw - 2)
+        stdscr.addstr(y + 1, x, "┌" + "─" * (bw - 2) + "┐")
+        if idx == selected:
+            stdscr.attron(curses.color_pair(1))
+        stdscr.addstr(y + 2, x, "│" + text + "│")
+        if idx == selected:
+            stdscr.attroff(curses.color_pair(1))
+        stdscr.addstr(y + 3, x, "└" + "─" * (bw - 2) + "┘")
+        x += bw + gap
+
     stdscr.refresh()
 
+def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
+    stdscr.clear()
+    h, w = stdscr.getmaxyx()
 
-def main(stdscr):
-    # Turn off cursor blinking
-    curses.curs_set(0)
-    # Color scheme for selected column
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    # Specify the current selected column
-    current_col = 0
-    # Print the menu
-    print_menu(stdscr, current_col)
-    while 1:
+    if draw_extras:
+        draw_extras(stdscr)
+
+    for idx, item in enumerate(items):
+        label = ("▶ " if item.submenu else "  ") + item.label
+        x = w // 2 - len(label) // 2
+        y = h // 2 - len(items) // 2 + idx
+        if idx == selected:
+            stdscr.attron(curses.color_pair(1))
+            stdscr.addstr(y, x, label)
+            stdscr.attroff(curses.color_pair(1))
+        else:
+            stdscr.addstr(y, x, label)
+
+    stdscr.refresh()
+
+def run_menu(stdscr, items, layout="vertical", draw_extras=None):
+    """
+    layout="horizontal" → LEFT/RIGHT keys, box-buttons at the bottom.
+    layout="vertical"   → UP/DOWN keys, centered list (default for submenus).
+    Submenus always open as vertical regardless of their parent's layout.
+    draw_extras(stdscr) is painted before menu items on every redraw,
+    so you can overlay text boxes, live game values, banners, etc.
+    """
+    current  = 0
+    draw     = draw_menu_horizontal if layout == "horizontal" else draw_menu_vertical
+    key_prev = curses.KEY_LEFT  if layout == "horizontal" else curses.KEY_UP
+    key_next = curses.KEY_RIGHT if layout == "horizontal" else curses.KEY_DOWN
+
+    draw(stdscr, items, current, draw_extras)
+
+    while True:
         key = stdscr.getch()
-        if key == curses.KEY_LEFT and current_col > 0:
-            current_col -= 1
-        elif key == curses.KEY_RIGHT and current_col < len(menu) - 1:
-            current_col += 1
-        elif key == curses.KEY_ENTER or key in [10, 13]:
-            # If user selected last column, exit the program
-            teste = True
-            if current_col == len(menu) - 1:
-                setfoo('gameon', 0)
-                break
-            elif current_col == len(menu) - 2:
-                def confirmar_acao():
-                    pass
-                print_center(stdscr,"Ações Confirmadas".format(menu[current_col]))
-                stdscr.getch()
-                teste = False
-            elif current_col == len(menu) - 3:
-                def atirador_aae():
-                    pass    
-            elif current_col == len(menu) - 4:
-                def atirador():
-                    pass
-            elif current_col == len(menu) - 5:
-                def engenheiro():
-                    pass
-            elif current_col == len(menu) - 6:
-                def copiloto():
-                    pass            
-            elif current_col == len(menu) - 7:
-                def piloto():
-                    pass            
-            if teste:
-                print_center(stdscr, "You selected '{}'".format(menu[current_col]))
-                stdscr.getch()
-        print_menu(stdscr, current_col)
+
+        if key == key_prev and current > 0:
+            current -= 1
+
+        elif key == key_next and current < len(items) - 1:
+            current += 1
+
+        elif key in (curses.KEY_ENTER, 10, 13):
+            item = items[current]
+            if item.submenu:
+                result = run_menu(stdscr, item.submenu)   # always vertical
+                if result is EXIT:
+                    return EXIT
+                # BACK from child → fall through, redraw this level
+            elif item.action:
+                result = item.action(stdscr)
+                if result is EXIT:
+                    return EXIT
+                if result is BACK:
+                    return BACK
+                # None → stay, redraw this level
+
+        elif key == 27:   # Escape → go up one level
+            return BACK
+
+        draw(stdscr, items, current, draw_extras)
+
+#game actions
+def confirmar_acoes(stdscr):
+    if f['turnosatuais'] < 3:
+        turnos = f'Você ainda tem {f['turnosatuais']} ações!'
+        stdscr.addstr((h // 2) - 2, w // 2 - len(turnos) // 2, turnos)
+    h, w = stdscr.getmaxyx()
+    stdscr.clear()
+    msg = "Ações Confirmadas"
+    stdscr.addstr(h // 2, w // 2 - len(msg) // 2, msg)
+    stdscr.refresh()
+    timer(25)
+
+
+def undo():
+    pass
+
+def escape_seq():
+    setfoo('gameon', 0)
+    setfoo('gamewin', 1)
+
+def force_confirm():
+    setfoo('turnosatuais', 3)
+
+# ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
+MENU = [
+    opt("Piloto"),     
+    opt("Copiloto"),   
+    opt("Engenheiro"),   
+    opt("Atirador"),
+    opt("Atirador AAE", submenu=[
+        opt("Atirar em um Inimigo",   action=lambda s: None),
+        opt("Trocar Tipo de Munição", action=lambda s: None),
+        opt("Procurar Ponto Fraco",   action=lambda s: None),
+        opt("Levantar",               action=lambda s: None),
+        opt("Desfazer Ação",          action=undo),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),
+        ]),
+        opt("Voltar",        action=back_action),
+    ]),
+    opt("Confirmar Ações", action=confirmar_acoes),
+    opt("Desligar Jogo",   action=escape_seq),
+]
+
+
+#entry point
+def main(stdscr):
+    curses.curs_set(0)
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    run_menu(stdscr, MENU, layout="horizontal")
+    # To add game-state overlays to the top layer:
+    # run_menu(stdscr, MENU, layout="horizontal", draw_extras=my_hud_fn)
+
 
 
 while f['gameon'] == 1:
@@ -988,9 +1070,14 @@ while f['gameon'] == 1:
     setfoo('rods', f['rods']+1)
     curses.wrapper(main)
 
+
+def atirador_aae(ação):
+    match ação:
+        case "atirar":
+            pass
+
+
 #criar função pra ler input e output
 #criar cli bonitinha
 #tabs 1 2 3 4 5 com ações de cada player, quando todas escolhidas, turno dos inimigos
 #calculo e ajustes, repete
-
-
