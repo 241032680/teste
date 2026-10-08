@@ -1028,7 +1028,26 @@ MENU = [
     opt("Piloto"),     
     opt("Copiloto"),   
     opt("Engenheiro"),   
-    opt("Atirador"),
+    opt("Atirador",submenu=[
+        opt("Atirar em um Inimigo",   action=lambda s: None),
+        opt("Abrir Painel de Utilitários", submenu=[
+            opt("Ajustar Gravidade", action=lambda s: None),
+            opt("Ajustar Sonar",   action=lambda s: None),
+            opt("Ajustar Rádio",   action=lambda s: None),
+            opt("Ajustar Criogenia", action=lambda s: None),
+        ]),
+        opt("Abrir Painel de Comunicações", submenu=[
+            opt("Interceptar Comms Inimigas", action=lambda s: None),
+            opt("Enviar Mensagem", action=lambda s: None),
+            opt("Sabotar Comms Inimigas", action=lambda s: None),
+        ]),
+        opt("Desfazer Ação",          action=undo),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),
+        ]),
+        opt("Voltar",        action=back_action),
+    ]),
     opt("Atirador AAE", submenu=[
         opt("Atirar em um Inimigo",   action=lambda s: None),
         opt("Trocar Tipo de Munição", action=lambda s: None),
