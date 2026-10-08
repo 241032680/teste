@@ -248,14 +248,14 @@ def flip(): #ativar/desativar overclock
     return ()
 def setdirect(direct): #direcionar foco dos escudos (equilibrado, frente, atrás)
     if (direct) == 1:
-        setstat ('escudof', ceil((s['escudo'] + (5*s['overclock'])),1))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))))
+        setstat ('escudof', ceil((s['escudo'] + (5* s['overclock'])),1))
+        setstat ('escudot', int((s['escudo'] + (5 * s['overclock']))))
     elif (direct) == 2:
-        setstat ('escudof', int((s['escudo'] + (5*s['overclock']))*(1.5)))
-        setstat ('escudot', ceil((s['escudo'] + (5*s['overclock']))*(0.5),1))
+        setstat ('escudof', int((s['escudo'] + (5 * s['overclock'])) * (1.5)))
+        setstat ('escudot', ceil((s['escudo'] + (5 * s['overclock'])) * (0.5),1))
     elif (direct) == 3:
-        setstat ('escudof', ceil((s['escudo'] + (5*s['overclock']))*(0.5), 1))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))*(1.5)))
+        setstat ('escudof', ceil((s['escudo'] + (5 * s['overclock'])) * (0.5), 1))
+        setstat ('escudot', int((s['escudo'] + (5 * s['overclock'])) * (1.5)))
     else:
         setstat ('escudof', ceil(s['escudo'], 1))
         setstat ('escudot', int(s['escudo']))
@@ -512,14 +512,14 @@ def hitnave(intensidade): #acertos de inimigos
                     k = rand()%12
                     if k == 12:
                         setstat('novoprop', 1)
-                    setbuff('bdvelmax', (b['bdvelmax']) -(1*(s['numprops']+f['pesadoprop'])))
+                    setbuff('bdvelmax', (b['bdvelmax']) -(1 * (s['numprops'] + f['pesadoprop'])))
                     y = "Propulsor"
                 case 11:
                     setstat('danoasa', True)
                     k = rand()%8
                     if k == 8 and f['numasas']<4:
                         setstat('novaasa', 1)
-                    setbuff('bdpilot', (b['bdpilot']) -(1*(f['numasas']+f['pesadoasa']+f['medioasa'])))
+                    setbuff('bdpilot', (b['bdpilot']) -(1 * (f['numasas'] + f['pesadoasa'] + f['medioasa'])))
                     y = "Uma asa!"
 
         case "P" | "p": #pesado
@@ -536,7 +536,7 @@ def hitnave(intensidade): #acertos de inimigos
                     k = rand()%6
                     if k == 6 and s['numprops'] < 9:
                         setstat('novoprop', 1)
-                    setbuff('bdvelmax', (b['bdvelmax']) -(1*(s['numprops']+f['pesadoprop'])))
+                    setbuff('bdvelmax', (b['bdvelmax']) -(1 * (s['numprops'] + f['pesadoprop'])))
                     y = "Um dos propulsores"
                 case 7|9:
                     pass
@@ -553,7 +553,7 @@ def hitnave(intensidade): #acertos de inimigos
                     k = rand()%6
                     if k == 6 and f['numasas']<4:
                         setstat('novaasa', 1)
-                    setbuff('bdpilot', (b['bdpilot']) -(1*(f['numasas']+f['pesadoasa']+f['medioasa'])))
+                    setbuff('bdpilot', (b['bdpilot']) -(1 * (f['numasas'] + f['pesadoasa'] + f['medioasa'])))
                     y = "Uma asa!"
         case _:
             setstat('hp', s['hp'] -8)
@@ -583,14 +583,14 @@ def conserto(lugar):
     match lugar:
         case 'prop':
             setstat('numprops', s['numprops'] -1)
-            setbuff('bdvelmax', b['bdvelmax'] + (1*(1+f['pesadoprop'])))
+            setbuff('bdvelmax', b['bdvelmax'] + (1 * (1 + f['pesadoprop'])))
         case 'grav':
-            setbuff('bdmobil', b['bdmobil']+s['rodssemgrav']*2)
-            setbuff('bdcover', b['bdcover']+s['rodssemgrav']*1)
+            setbuff('bdmobil', b['bdmobil'] + s['rodssemgrav'] * 2)
+            setbuff('bdcover', b['bdcover'] + s['rodssemgrav'] * 1)
             setstat('rodssemgrav', 0)
             setstat('danograv', False)
         case 'crio':
-            setbuff('bdrolls', b['bdrolls'] + (1*f['hitcrio']))
+            setbuff('bdrolls', b['bdrolls'] + (1 * f['hitcrio']))
             setfoo('hitcrio', f['hitcrio'] -1)
         case 'geradorescudo':
             setstat('genescudo', True)
@@ -696,7 +696,7 @@ def danos():
             pass
     if danopropulsores == True:
         if s['novoprop'] == 1 and s['numprops'] != 9:
-            setstat('numprops', max(s['numprops']+1, 9))
+            setstat('numprops', max(s['numprops'] + 1, 9))
             print('Um novo propulsor foi danificado!')
             setstat('novoprop', 0)
         print("Propulsores danificados!")
@@ -711,7 +711,7 @@ def danos():
         setstat('hangarselado', True)
     if danoasa == True:
         if s['novaasa'] == 1 and s['numprops'] != 4:
-            setstat('numasas', max(f['numasas']+1, 4))
+            setstat('numasas', max(f['numasas'] + 1, 4))
             print('Uma nova asa foi danificada!')
             setstat('novoprop', 0)
         if f['numasas'] == 1:
@@ -770,12 +770,12 @@ def criarinimigo(tipo):
   n = len(inimigos)
   inimigos[f'i{(n+1)}'] = {
   "tipo" : tipo,
-  "hp" : 30 + float(((sin(rand()))*6.66)),
+  "hp" : 30 + float(((sin(rand())) * 6.66)),
   }
 
 i1 = {
     "tipo de inimigo": "leve",
-    "hp" : int((30 + (sin(rand()))*6.66)),
+    "hp" : int((30 + (sin(rand())) * 6.66)),
     "velocidade": 6,
     "mísseis" : rand()%2,
     "escudo": 10,
