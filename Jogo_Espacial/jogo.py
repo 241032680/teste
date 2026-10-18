@@ -1,3 +1,20 @@
+import time
+import array
+
+
+def getstat(stat):
+    return sum(stat)
+
+def initstat():
+    return array.array('b', [0]*8)
+
+def timer(frames):
+    while frames:
+        secs, totframes = divmod(frames, 50)
+        timer = str(f'{secs, totframes}')
+        time.sleep((1/50))
+        frames -= 1
+
 #arrendondar pra cima
 #ceil (5, 2)
 #print (ceil (5, 2))
@@ -48,148 +65,72 @@ def avg(list):
 
 #stats
 #começando a separar por causa do display/GUI, talvez desnecessário com método...
-s = {}
 f = {}
-b = {}
-t = {}
-def setstat(name, value):
-    s[name] = value
+
+
 def setfoo(foo, valor):
     f[foo] = valor
-def setbuff(buff, valor):
-    b[buff] = valor
-def settipo(tipo, nome):
-    t[tipo] = nome
-def updater(): #atualiza stats globais
-    setstat('danoaae', (s['aaebase']+b['bcaae']+b['bmaae']+b['bdaae']+b['braae']+b['bgaae']+b['bsaae'])* t['tipoaae'])
-    setbuff('danotorp', (s['torpbase'] +b['bctorp']+b['bmtorp']+b['bdtorp']+b['brtorp']+b['bgtorp']+b['bstorp']) * t['tipotorp'])
-    setstat('velmax', s['velmaxbase']+b['bcvelmax']+b['bmvelmax']+b['bdvelmax']+b['brvelmax']+b['bgvelmax']+b['bsvelmax'])
-    setstat('danofrontal', s['frontalbase']+b['bcfront']+b['bmfront']+b['bdfront']+b['brfront']+b['bgfront']+b['bsfront'])
-
-#stats individuais:
-#setstat(stat qualquer) (alvo) = statbase(alvo) + b(buff)(stat)
-    #setstat('mobil', s['mobilbase'] +b['bcmobil']+b['bmmobil']+b['bdmobil']+b['brmobil']+b['bgmobil']+b['bsmobil'])
-    #setstat('util', s['utilbase'] +b['bcutil']+b['bmutil']+b['bdutil']+b['brutil']+b['bgutil']+b['bsutil'])
-    #setstat('pilot', s['pilotbase'] +b['bcpilot']+b['bmpilot']+b['bdpilot']+b['brpilot']+b['bgpilot']+b['bspilot'])
-    #setstat('rolls', s['rollsbase']+b['bcpilot']+b['bmpilot']+b['bdpilot']+b['brpilot']+b['bgpilot']+b['bspilot'])
-    #setstat('cover', s['coverbase'] +b['bccover']+b['bmcover']+b['bdcover']+b['brcover']+b['bgcover']+b['bscover'])
-
 
 #stats nave
-
-setstat('numtorpedos', 5)
-setstat('numaae', 8)
-setstat('numfrontal', 6)
-setstat('hp', 20)
-setstat('escudo', 0)
-setstat('velmax', 7)
-setstat('escudof', 0)
-setstat('escudot', 0)
-setstat('overclock', 0)
-setstat('direct', 1)
-setstat('modo', 1)
-setstat('grav', 3)
-setstat('sonar', 3)
-setstat('radio', 3)
-setstat('crio', 3)
-setstat('podeusartorpedo', True)
-setstat('podeusarcomms', True)
-setstat('torpbase', 1)
-setstat('aaebase', 1)
-setstat('frontalbase', 1)
-setstat('criodesmaio', 5)
-setstat('depressurização', 3)
-setstat('hangarselado', False)
-setstat('motorfrito', False)
-setstat('motorquente', False)
-setstat('riscomotor', 8)
-#buffs crio
-setbuff('bcmobil',0)
-setbuff('bcmira',0)
-setbuff('bcpercep',0)
-setbuff('bcpilot', 0)
-setbuff('bcutil', 0)
-setbuff('bctorp', 0)
-setbuff('bcaae', 0)
-setbuff('bcfront', 0)
-setbuff('bcvelmax',0)
-setbuff('bcrolls',0)
-setbuff('bccover',0)
-setbuff('bcescudo',0)
-#buffs modo
-setbuff('bmmobil',0)
-setbuff('bmmira',0)
-setbuff('bmpercep',0)
-setbuff('bmpilot', 0)
-setbuff('bmutil', 0)
-setbuff('bmtorp', 0)
-setbuff('bmaae', 0)
-setbuff('bmfront', 0)
-setbuff('bmvelmax',0)
-setbuff('bmrolls',0)
-setbuff('bmcover',0)
-setbuff('bmescudo',0)
-#buffs radio
-setbuff('brmobil',0)
-setbuff('brmira',0)
-setbuff('brpercep',0)
-setbuff('brpilot', 0)
-setbuff('brutil', 0)
-setbuff('brtorp', 0)
-setbuff('braae', 0)
-setbuff('brfront', 0)
-setbuff('brvelmax',0)
-setbuff('brrolls',0)
-setbuff('brcover',0)
-setbuff('brescudo',0)
-#buffs sonar
-setbuff('bsmobil',0)
-setbuff('bsmira',0)
-setbuff('bspercep',0)
-setbuff('bspilot', 0)
-setbuff('bsutil', 0)
-setbuff('bstorp', 0)
-setbuff('bsaae', 0)
-setbuff('bsfront', 0)
-setbuff('bsvelmax',0)
-setbuff('bsrolls',0)
-setbuff('bscover',0)
-setbuff('bsescudo',0)
-#buffs grav
-setbuff('bgmobil',0)
-setbuff('bgmira',0)
-setbuff('bgpercep',0)
-setbuff('bgpilot', 0)
-setbuff('bgutil', 0)
-setbuff('bgtorp', 0)
-setbuff('bgaae', 0)
-setbuff('bgfront', 0)
-setbuff('bgvelmax',0)
-setbuff('bgrolls',0)
-setbuff('bgcover',0)
-setbuff('bgescudo',0)
-#buffs danonave
-setbuff('bdmobil',0)
-setbuff('bdmira',0)
-setbuff('bdpercep',0)
-setbuff('bdpilot', 0)
-setbuff('bdutil', 0)
-setbuff('bdtorp', 0)
-setbuff('bdaae', 0)
-setbuff('bdfront', 0)
-setbuff('bdvelmax',0)
-setbuff('bdrolls',0)
-setbuff('bdcover',0)
-setbuff('bdescudo',0)
-#stats players
-setstat('pilotbase', 1)
-setstat('mobil',1)
-setstat('velmaxbase',1)
-setstat('rollsbase',1)
-setstat('coverbase',1)
-setstat('mirabase',1)
-setstat('percepbase',1)
-setstat('utilbase', 1)
+numtorpedos = initstat()
+numtorpedos[0] = 5
+numaae = initstat()
+numaae[0] = 8
+numfrontal = initstat()
+numfrontal[0] = 6
+hp = initstat()
+hp[0] = 20
+escudo = initstat()
+velmax = initstat()
+velmax[0] = 7
+escudof = initstat()
+escudot = initstat()
+overclock = initstat()
+direct = initstat()
+direct[0] = 1
+modoativo = initstat()
+modoativo[0] = 1
+grav = initstat()
+grav[0] = 1
+sonar = initstat()
+sonar[0] = 1
+radio = initstat()
+radio[0] = 1
+crio = initstat()
+crio[0] = 1
+danotorp = initstat()
+danotorp[0] = 1
+danoaae = initstat()
+danoaae[0] = 1
+danofront = initstat()
+danofront[0] = 1
+criodesmaio = initstat()
+criodesmaio[0] = 5
+depressurização = initstat()
+depressurização[0] = 3
+riscomotor = initstat()
+riscomotor[0] = 8
+pilotagem = initstat()
+mobilidade = initstat()
+rolls = initstat()
+cover = initstat()
+mira = initstat()
+percepçao = initstat()
+utilitarios = initstat()
+pilotagem[0] = 1
+mobilidade[0] = 1
+rolls[0] = 1
+cover[0] = 1
+mira[0] = 1
+percepçao[0] = 1
+utilitarios[0] = 1
+#buffs/debuffs modo: stat[1]
+#buffs/debuffs crio: stat[2]
+#buffs/debuffs sonar: stat[3]
+#buffs/debuffs radio: stat[4]
+#buffs/debuffs grav: stat[5]
+#buffs/debuffs danonave: stat[6]
+#stats/debuffs players
 
 #randomizador
 setrand('d', 1)
@@ -214,169 +155,101 @@ setfoo('quarto2dano', False)
 setfoo('quarto3dano', False)
 setfoo('quarto4dano', False)
 setfoo('quarto5dano', False)
+setfoo('podeusartorpedo', True)
+setfoo('podeusarcomms', True)
+setfoo('motorfrito', False)
+setfoo('motorquente', False)
+setfoo('hangarselado', False)
 
 #tipos de dano
-settipo('tipoaae', 1)
-settipo('tipotorp', 1)
+setfoo('tipoaae', 1)
+setfoo('tipotorp', 1)
 
-#print(s['torpedos'], s['plasma'], s['av'], s['gas'], s['aaebase'], s['frontalbase'], s['icss'], s['bateria'], s['cohm'], s['hp'], s['escudo'])
-
-#distribuição de escudo
-#Padrão: Geração de Escudo Total = 10
-#frontal: Geração de Escudo frontal x Traseiro = [15 , 5]
-#Traseira: Geração de Escudo frontal x Traseiro = [5 , 15]
-#Overclocked: +5 Geração de Escudo, mas +¼ chance de fritar o Gerador por rodada utilizada (¼, ½ , ¾…)
+f.update({
+    'danocrio': False, 'danograv': False, 'danohangar': False,
+    'danoasa': False, 'danoquartos': False, 'danopropulsores': False,
+    'danoarmazém': False, 'danomedbay': False, 'danocozinha': False,
+    'genescudo': True, 'criodesmaio': 5, 'hitcrio': 0,
+    'rodssemgrav': 0, 'numquartos': 0, 'quarto': -1, 'salacomum': False,
+    'novoprop': 0, 'novaasa': 0, 'riscoverclock': 0,
+    'danomotor': False, 'falhamotor': False, 'direçãoinimigo': None,
+}) #define estados iniciais usados antes do primeiro dano
 
 def flip(): #ativar/desativar overclock
-    if (s['overclock']) == 0:
-        setstat ('overclock', int(1))
-        setstat('motorquente', True)
-    else:
-        setstat('overclock', int(0))
-        setstat('motorquente', False)
-    setdirect(s['direct'])
-    setmodo(modo)
+    overclock[0] = int(not getstat(overclock))
+    setfoo('motorquente', bool(overclock[0]))
+    setmodo(getstat(modoativo)) #setmodo também atualiza a distribuição dos escudos
     return ()
-def setdirect(direct): #direcionar foco dos escudos (equilibrado, frente, atrás)
-    if (direct) == 1:
-        setstat ('escudof', ceil((s['escudo'] + (5*s['overclock'])),1))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))))
-    elif (direct) == 2:
-        setstat ('escudof', int((s['escudo'] + (5*s['overclock']))*(1.5)))
-        setstat ('escudot', ceil((s['escudo'] + (5*s['overclock']))*(0.5),1))
-    elif (direct) == 3:
-        setstat ('escudof', ceil((s['escudo'] + (5*s['overclock']))*(0.5), 1))
-        setstat ('escudot', int((s['escudo'] + (5*s['overclock']))*(1.5)))
+
+def setdirect(direcao): #direcionar foco dos escudos (equilibrado, frente, atrás)
+    escudo_base = getstat(escudo)
+    escudo_total = escudo_base + 5 * getstat(overclock) #reutiliza o total do escudo
+    if direcao == 1:
+        escudof[0], escudot[0] = ceil(escudo_total, 1), int(escudo_total)
+    elif direcao == 2:
+        escudof[0], escudot[0] = int(escudo_total * 1.5), ceil(escudo_total * 0.5, 1)
+    elif direcao == 3:
+        escudof[0], escudot[0] = ceil(escudo_total * 0.5, 1), int(escudo_total * 1.5)
     else:
-        setstat ('escudof', ceil(s['escudo'], 1))
-        setstat ('escudot', int(s['escudo']))
-    setstat('direct', direct)
-    updater()
+        escudof[0], escudot[0] = ceil(escudo_base, 1), int(escudo_base)
+    direct[0] = direcao
     return direct
+MODOS = {
+    1: (10, 0, 0, 0, 0, 0, 0),
+    2: (15, -2, -8, -5, -6, -1, -1),
+    3: (9, 3, -5, -5, -4, 2, -1),
+    4: (7, -1, 6, 1, 4, 0, -1),
+    5: (8, -1, -3, 5, -2, 1, 2),
+} #centraliza os modificadores de cada modo
 
 def setmodo(modo): #modos de distribuição de energia
-    if modo == int(1): #padrao
-        setstat('escudo', 10)
-        setbuff('bmvelmax', 0)
-        setbuff('bmtorp', 0)
-        setbuff('bmaae', 0)
-        setbuff('bmfront', 0)
-        setbuff('bmpilot', 0)
-        setbuff('bmutil', 0)
-    elif modo == int(2): #escudo
-        setstat('escudo', 15)
-        setbuff('bmvelmax', -2)
-        setbuff('bmtorp', -5)
-        setbuff('bmaae', -8)
-        setbuff('bmfront', -6)
-        setbuff('bmpilot', -1)
-        setbuff('bmutil', -1)
-    elif modo == int(3): #propulsores
-        setstat('escudo', 9)
-        setbuff('bmvelmax', 3)
-        setbuff('bmaae', -5)
-        setbuff('bmtorp', -5)
-        setbuff('bmfront', -4)
-        setbuff('bmpilot', 2)
-        setbuff('bmutil', -1)
-    elif modo == int(4): #torretas
-        setstat('escudo', 7)
-        setbuff('bmvelmax', -1)
-        setbuff('bmaae', 6)
-        setbuff('bmtorp', 1)
-        setbuff('bmfront', 4)
-        setbuff('bmpilot', 0)
-        setbuff('bmutil', -1)
-    elif modo == int(5): #utilitários
-        modo = 5
-        setstat('escudo', 8)
-        setbuff('bmvelmax', -1)
-        setbuff('bmaae', -3)
-        setbuff('bmtorp', 5 )
-        setbuff('bmfront', -2)
-        setbuff('bmpilot', 1)
-        setbuff('bmutil', 2)
-    else:
-        modo = setmodo(1)
-    setstat('escudo', s['escudo'])
-    setstat('modo', modo)
-    setdirect(s['direct'])
-    updater()
-    return modo
+    if modo not in MODOS:
+        modo = 1 #corrigido: evita recursão para o modo padrão
+    modoativo[0] = modo
+    (escudo[1], velmax[1], danoaae[1], danotorp[1],
+     danofront[1], pilotagem[1], utilitarios[1]) = MODOS[modo]
+    setdirect(getstat(direct))
+    return modoativo
 
-modo = setmodo(1)
+setmodo(1)
+setfoo('escudoefetivof', escudof[0]) #inicializa o escudo frontal
+setfoo('escudoefetivot', escudot[0]) #inicializa o escudo traseiro
 
-def utilbase(crio, sonar, radio, grav): #utilitários
-    setstat('crio', crio)
-    setstat('sonar', sonar)
-    setstat('radio', radio)
-    setstat('grav', grav)
-    if crio == True or crio == 1 or s['crio']==1:
-        print ("Crio On")
-        setbuff('bcrolls', 0)
-        setbuff('bcvelmax', 0)
-        setbuff('bcaae', 0)
-        setbuff('bcfront', 0)
-        setstat('crio', crio)
-        #return s['crio']
+def utilbase(crioat, sonarat, radioat, gravat): #utilitários
+    crio[0], sonar[0], radio[0], grav[0] = (
+        int(bool(crioat)), int(bool(sonarat)), int(bool(radioat)), int(bool(gravat))
+    ) #normaliza estados para 0/1
+
+    if crio[0]:
+        print("Crio On")
+        rolls[2] = velmax[2] = danoaae[2] = danofront[2] = 0
     else:
-        print ("Crio Off")
-        setbuff('bcrolls', -1)
-        setbuff('bcvelmax', 3)
-        setbuff('bcaae', 4)
-        setbuff('bcfront', 4)
-        setstat('crio', crio)
-        #return s['crio']
-    if sonar == True or sonar == 1 or s['sonar']==1:
-        print ("Sonar On")
-        setbuff('bsmira', 0)
-        setbuff('bspercep', 0)
-        setbuff('bsaae', 0)
-        setbuff('bsfront', 0)
-        setbuff('bsvelmax', 0)
-        setstat('sonar', sonar)
-        #return s['sonar']
+        print("Crio Off")
+        rolls[2], velmax[2], danoaae[2], danofront[2] = -1, 3, 4, 4
+
+    if sonar[0]:
+        print("Sonar On")
+        mira[3] = percepçao[3] = danoaae[3] = danofront[3] = velmax[3] = 0
     else:
-        print ("Sonar Off")
-        setstat('podeusartorpedo', True)
-        setbuff('bsmira', -2)
-        setbuff('bspercep', -1)
-        setbuff('bsaae', 3)
-        setbuff('bsfront', 1)
-        setbuff('bsvelmax', 1)
-        setstat('sonar', sonar)
-        #return s['sonar']
-    if radio == True or radio == 1 or s['radio']==1:
-        print ("Radio On")
-        setbuff('brvelmax', 0)
-        setstat('radio', radio)
-        #return s['radio']
+        print("Sonar Off")
+        mira[3], percepçao[3], danoaae[3], danofront[3], velmax[3] = -2, -1, 3, 1, 1
+        setfoo('podeusartorpedo', True)
+
+    if radio[0]:
+        print("Radio On")
+        velmax[4] = 0
+        radio[0] = radioat
     else:
-        print ("Radio Off")
-        setstat('podeusarcomms', False)
-        setbuff('brvelmax', 1)
-        setstat('radio', radio)
-        #return s['radio']
-    if grav == True or grav == 1 or s['grav']==1:
-        print ("Gravity On")
-        setbuff('bgmobil', 0)
-        setbuff('bgcover', 0)
-        setbuff('bgmira', 0)
-        setbuff('bgescudo', 0)
-        setstat('bgaee', 0)
-        setbuff('bgfront', 0)
-        setstat('grav', grav)
-        #return s['grav']
+        print("Radio Off")
+        velmax[4] = 1
+        setfoo('podeusarcomms', False)
+
+    if grav[0]:
+        print("Gravity On")
+        mobilidade[5] = cover[5] = mira[5] = escudo[5] = danoaae[5] = danofront[5] = 0
     else:
-        print ("Gravity Off")
-        setbuff('bgmobil', -2)
-        setbuff('bgcover', -2)
-        setbuff('bgmira', -1)
-        setbuff('bgescudo', 2)
-        setstat('bgaee', 1)
-        setbuff('bgfront', 1)
-        setstat('grav', grav)
-        #return s['grav']
+        print("Gravity Off")
+        mobilidade[5], cover[5], mira[5], escudo[5], danoaae[5], danofront[5] = -2, -2, -1, 2, 1, 1
 
 #inventários
 
@@ -395,53 +268,24 @@ quarto3 = {}
 quarto4 = {}
 quarto5 = {}
 
-def arm(nome, valor):
-    armazém[nome.upper()] = valor
+#centraliza as capacidades dos inventários
+capacidade_inventarios = (
+    (armazém, 18), (cozinha, 12),
+    (medbay, 12), (salacomum, 6),
+    (quarto1, 4), (quarto2, 4), (quarto3, 4), (quarto4, 4), (quarto5, 4),
+) 
 
-#armazém('caixa de madeira', 90)
-
-
-#medbay (12 slots)
-#itens de cura
-def med(nome, valor, tipo):
-    medbay[nome.upper()] = valor
-    medbay['Tipo:'] = tipo.capitalize()
-
-#cozinha (12 slots)
-#itens de cura, rango e alguns valiosos
-
-def coz(nome, valor, tipo):
-    cozinha[nome.capitalize()] = valor
-    cozinha['Tipo:'] = tipo.capitalize()
-
-#sala comum (6 slots)
-#itens pessoais de players, o que não couber em outros espaçoes
-
-def sala(nome, valor, tipo):
-    salacomum[nome.capitalize()] = valor
-    salacomum['Tipo:'] = tipo.capitalize()
-
-#Quartos (4 slots)
-
-def quarto1(nome, valor, tipo):
-    quarto1[nome.capitalize()] = valor
-    quarto1['Tipo:'] = tipo.capitalize()
-
-def quarto2(nome, valor, tipo):
-    quarto2[nome.capitalize()] = valor
-    quarto2['Tipo:'] = tipo.capitalize()
-
-def quarto3(nome, valor, tipo):
-    quarto3[nome.capitalize()] = valor
-    quarto3['Tipo:'] = tipo.capitalize()
-
-def quarto4(nome, valor, tipo):
-    quarto4[nome.capitalize()] = valor
-    quarto4['Tipo:'] = tipo.capitalize()
-
-def quarto5(nome, valor, tipo):
-    quarto5[nome.capitalize()] = valor
-    quarto5['Tipo:'] = tipo.capitalize()
+#centraliza os estados dos quartos
+quartos = {
+    'salacomum': (0, 'salacomum', salacomum),
+    'quarto1': (1, 'quarto1dano', quarto1),
+    'quarto2': (2, 'quarto2dano', quarto2),
+    'quarto3': (3, 'quarto3dano', quarto3),
+    'quarto4': (4, 'quarto4dano', quarto4),
+    'quarto5': (5, 'quarto5dano', quarto5),
+}
+def additem(local, nome, valor):
+    local[nome.upper()] = valor
 
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
@@ -449,316 +293,246 @@ def quarto5(nome, valor, tipo):
 #ordem de turnos: piloto, copiloto, engenheiro, atirador, atirador aaebase, ajuste de distância, inimigos
 
 def hitnave(intensidade): #acertos de inimigos
-    c = 0 + s['foo']
+    intensidade = intensidade.lower()
+    if intensidade == 'r':
+        hitnave(('l', 'm', 'p')[rand() % 3]) #corrigido: r sorteia apenas a intensidade
+        setfoo('foo', 1)
+        return
+
+    c = f['foo']
     y = "O casco"
-    match intensidade:
-        case"L" | "l": #leve
-            if s['escudoefetivof'] > 0 and s['direçãoinimigo'] == "Frente":
-                setstat('escudoefetivof', s['escudoefetivof'] - 5)
-            elif s['escudoefetivot'] > 0 and s['direçãoinimigo'] == "Atras":
-                setstat('escudoefetivot', s['escudoefetivot'] - 5)
-            else:
-                setstat('hp', s['hp'] -5)
-            z = str("leve")
-            a = (rand()%12)
-            #if 
-            match a:
+    danos_base = {'l': 5, 'm': 8, 'p': 12}
+    if intensidade not in danos_base:
+        hp[0] -= 8
+        z = ""
+        c += 1
+    else:
+        z = {'l': 'leve', 'm': 'médio', 'p': 'pesado'}[intensidade]
+        c = 0 if intensidade in ('m', 'p') else c
+        dano = danos_base[intensidade]
+        direcao = f.get('direçãoinimigo')
+        if direcao == 'Frente' and f['escudoefetivof'] > 0:
+            setfoo('escudoefetivof', f['escudoefetivof'] - dano) #escudo absorve o ataque inteiro
+        elif direcao == 'Atras' and f['escudoefetivot'] > 0:
+            setfoo('escudoefetivot', f['escudoefetivot'] - dano) #escudo absorve o ataque inteiro
+        else:
+            hp[0] -= dano
+
+        if intensidade == 'l':
+            match rand() % 12:
                 case 0:
-                    utilbase(0, sonar=s['sonar'], radio=s['radio'], grav=s['grav'])
-                    setstat('danocrio', True)
-                    setbuff('bdrolls', b['bdrolls'] - 1)
-                    setfoo('hitcrio', s['hitcrio'] + 1)
+                    utilbase(0, getstat(sonar), getstat(radio), getstat(grav))
+                    setfoo('danocrio', True)
+                    rolls[6] -= 1
+                    setfoo('hitcrio', f['hitcrio'] + 1)
                     y = "Criogênicos"
                 case 1:
-                    setstat('danograv', True)
-                    utilbase(crio=s['crio'], sonar=s['sonar'], radio=s['radio'], grav=0)
+                    setfoo('danograv', True)
+                    utilbase(getstat(crio), getstat(sonar), getstat(radio), 0)
                     y = "Gerador de Gravidade"
                 case 2:
-                    setstat('genescudo', False)
+                    setfoo('genescudo', False)
                     y = "Gerador de Escudo"
                 case 3:
-                    setstat('danomedbay', True)
+                    setfoo('danomedbay', True)
                     y = "Medbay"
                 case 4:
-                    setstat('danocozinha', True)
+                    setfoo('danocozinha', True)
                     y = "Cozinha"
                 case 5:
                     pass
                 case 6:
-                    setstat('danoquartos', True)
-                    setfoo('quarto', rand()%6)
-                    setfoo('numquartos', f['numquartos']+1)
+                    setfoo('danoquartos', True)
+                    setfoo('quarto', rand() % 6)
+                    setfoo('numquartos', f['numquartos'] + 1)
                     y = "Um dos quartos"
                 case 7:
-                    setstat('podeusarcomms', False)
+                    setfoo('podeusarcomms', False)
                     y = 'Sala de Utilitários'
                 case 8:
-                    setstat('danoarmazém', True)
+                    setfoo('danoarmazém', True)
                     y = 'Armazém'
                 case 9:
-                    setstat('danohangar', True)
+                    setfoo('danohangar', True)
                     y = "Microhangar"
                 case 10:
-                    setstat('danopropulsores', True)
-                    k = rand()%12
-                    if k == 12:
-                        setstat('novoprop', 1)
-                    setbuff('bdvelmax', (b['bdvelmax']) -(1*(s['numprops']+f['pesadoprop'])))
+                    setfoo('danopropulsores', True)
+                    if rand() % 12 == 0 and f['numprops'] < 9:
+                        setfoo('novoprop', 1) #corrigido: sucesso é o resto zero
+                    velmax[6] -= f['numprops'] + f['pesadoprop']
                     y = "Propulsor"
                 case 11:
-                    setstat('danoasa', True)
-                    k = rand()%8
-                    if k == 8 and f['numasas']<4:
-                        setstat('novaasa', 1)
-                    setbuff('bdpilot', (b['bdpilot']) -(1*(f['numasas']+f['pesadoasa']+f['medioasa'])))
+                    setfoo('danoasa', True)
+                    if rand() % 8 == 0 and f['numasas'] < 4:
+                        setfoo('novaasa', 1) #corrigido: sucesso é o resto zero
+                    pilotagem[6] -= f['numasas'] + f['pesadoasa'] + f['medioasa']
                     y = "Uma asa!"
 
-        case "P" | "p": #pesado
-            setstat('hp', s['hp'] -12)
-            z = str("pesado")
-            c = 0
-            p = rand()%10
-            match p:
+        elif intensidade == 'p':
+            match rand() % 10:
                 case 0|5:
                     pass
                 case 6:
-                    setstat('pesadoprop', f['pesadoprop']+ 1)
-                    setstat('danopropulsores', True)
-                    k = rand()%6
-                    if k == 6 and s['numprops'] < 9:
-                        setstat('novoprop', 1)
-                    setbuff('bdvelmax', (b['bdvelmax']) -(1*(s['numprops']+f['pesadoprop'])))
+                    setfoo('pesadoprop', f['pesadoprop'] + 1)
+                    setfoo('danopropulsores', True)
+                    if rand() % 6 == 0 and f['numprops'] < 9:
+                        setfoo('novoprop', 1) #corrigido: sucesso é o resto zero
+                    velmax[6] -= f['numprops'] + f['pesadoprop']
                     y = "Um dos propulsores"
-                case 7|9:
-                    pass
-        case "M" | "m":
-            setstat('hp', s['hp'] -8)
-            z = str("médio")
-            c = 0
-            m = rand()%10
-            match m:
-                case 0|8:
+
+        elif intensidade == 'm':
+            match rand() % 10:
+		case 0|8:
                     pass
                 case 9:
-                    setstat('danoasa', True)
-                    k = rand()%6
-                    if k == 6 and f['numasas']<4:
-                        setstat('novaasa', 1)
-                    setbuff('bdpilot', (b['bdpilot']) -(1*(f['numasas']+f['pesadoasa']+f['medioasa'])))
+                    setfoo('danoasa', True)
+                    if rand() % 6 == 0 and f['numasas'] < 4:
+                        setfoo('novaasa', 1) #corrigido: sucesso é o resto zero
+                    pilotagem[6] -= f['numasas'] + f['pesadoasa'] + f['medioasa']
                     y = "Uma asa!"
-        case _:
-            setstat('hp', s['hp'] -8)
-            z = ""
-            c += 1
-            #setfoo('foo', s['foo'] + 1)
+
     if c < 2:
         print(f"{y} levou um tiro {z}!")
-    if intensidade == "r" or intensidade == "R":
-        b = rand()%3
-        y = "Algo"
-        z = ""
-        c = 0
-        if b == 0:
-            hitnave('l')
-            setfoo('foo', 1)
-        elif b == 1:
-            hitnave('m')
-            setfoo('foo', 1)
-        elif b == 2:
-            hitnave('p')
-            setfoo('foo', 1)
-        setfoo('foo', 1)
-    
+
 #ações players
 def conserto(lugar):
-    match lugar:
-        case 'prop':
-            setstat('numprops', s['numprops'] -1)
-            setbuff('bdvelmax', b['bdvelmax'] + (1*(1+f['pesadoprop'])))
-        case 'grav':
-            setbuff('bdmobil', b['bdmobil']+s['rodssemgrav']*2)
-            setbuff('bdcover', b['bdcover']+s['rodssemgrav']*1)
-            setstat('rodssemgrav', 0)
-            setstat('danograv', False)
-        case 'crio':
-            setbuff('bdrolls', b['bdrolls'] + (1*f['hitcrio']))
-            setfoo('hitcrio', f['hitcrio'] -1)
-        case 'geradorescudo':
-            setstat('genescudo', True)
-        case 'comms':
-            setstat('podeusarcomms', True)
-        case 'quarto1':
-            setfoo('quarto1dano', False)
-            setfoo('numquartos', f['numquartos'] - 1)
-            if f['numquartos'] <=0:
-                setfoo('quarto',-1)
-                setfoo('numquartos', 0)
-        case 'quarto2':
-            setfoo('quarto2dano', False)
-            setfoo('numquartos', f['numquartos'] - 1)
-            if f['numquartos'] <=0:
-                setfoo('quarto',-1)
-                setfoo('numquartos', 0) 
-        case 'quarto3':
-            setfoo('quarto3dano', False)
-            setfoo('numquartos', f['numquartos'] - 1)
-            if f['numquartos'] <=0:
-                setfoo('quarto',-1)
-                setfoo('numquartos', 0)
-        case 'quarto4':
-            setfoo('quarto4dano', False)
-            setfoo('numquartos', f['numquartos'] - 1)
-            if f['numquartos'] <=0:
-                setfoo('quarto',-1)
-                setfoo('numquartos', 0)
-        case 'quarto5':
-            setfoo('quarto5dano', False)
-            setfoo('numquartos', f['numquartos'] - 1)
-            if f['numquartos'] <=0:
-                setfoo('quarto',-1)
-                setfoo('numquartos', 0)
-        case 'salacomum':
-            setfoo('danosalacomum', False)
-            setfoo('numquartos', f['numquartos'] - 1)
-            if f['numquartos'] <=0:
-                setfoo('quarto',-1)
-                setfoo('numquartos', 0)
-    if s['numprops'] <= 0:
-        setstat('danoprop', False)
-    if f['quarto'] == -1 and f['numquartos'] <= 0:
-        setstat('danosalacomum', False)
-    if f['hitcrio'] <=0:
-        setstat('danocrio', False)
-#end of round
-def genescudo():
-    if s['genescudo'] == True:
-        setstat('escudoefetivof', s['escudof'] + b['bgescudo'] + b['bmescudo'] + b['bsescudo'] + b['bcescudo']+ b['brescudo'] + b['bdescudo'])
-        setstat('escudoefetivot', s['escudot'] + b['bgescudo'] + b['bmescudo'] + b['bsescudo'] + b['bcescudo']+ b['brescudo'] + b['bdescudo'])
+    if lugar == 'prop':
+        setfoo('numprops', f['numprops'] - 1)
+        velmax[6] += 1 + f['pesadoprop']
+    elif lugar == 'grav':
+        mobilidade[6] += f['rodssemgrav'] * 2
+        cover[6] += f['rodssemgrav']
+        setfoo('rodssemgrav', 0)
+        setfoo('danograv', False)
+    elif lugar == 'crio':
+        rolls[6] += f['hitcrio']
+        setfoo('hitcrio', f['hitcrio'] - 1)
+    elif lugar == 'geradorescudo':
+        setfoo('genescudo', True)
+        setfoo('escudoefetivof', escudof[0]) #corrigido: repara os escudos destruídos
+        setfoo('escudoefetivot', escudot[0])
+    elif lugar == 'comms':
+        setfoo('podeusarcomms', True)
+    elif lugar in QUARTOS:
+        _, estado, _ = QUARTOS[lugar]
+        setfoo(estado, False) #corrigido: usa o mesmo estado lido por danos()
+        setfoo('numquartos', max(f['numquartos'] - 1, 0))
+        if f['numquartos'] <= 0:
+            setfoo('quarto', -1)
+            setfoo('numquartos', 0)
 
-def inventorycheck():
-    while len(armazém) > 18:
-      armazém.popitem
-    while len(cozinha) > 12:
-      medbay.popitem
-    while len(medbay) > 12:
-      medbay.popitem
-    while len(salacomum) > 6:
-      salacomum.popitem
-    while len(quarto1) > 4:
-      quarto1.popitem
-    while len(quarto2) > 4:
-      quarto2.popitem
-    while len(quarto3) > 4:
-      quarto3.popitem
-    while len(quarto4) > 4:
-      quarto4.popitem
-    while len(quarto5) > 4:
-      quarto5.popitem
+    if f['numprops'] <= 0:
+        setfoo('danopropulsores', False) #corrigido: nome do estado usado por danos()
+    if f['quarto'] == -1 and f['numquartos'] <= 0:
+        setfoo('salacomum', False) #corrigido: estado da sala comum
+    if f['hitcrio'] <= 0:
+        setfoo('danocrio', False)
+
+#end of round
+
+def inventorycheck(): #corrigido: remove itens aleatórios ao exceder a capacidade
+    for inventario, capacidade in LIMITES_INVENTARIO:
+        while len(inventario) > capacidade:
+            inventario.pop(tuple(inventario)[rand() % len(inventario)]) #corrigido: remove por uma chave existente
+
 def danos():
-    rodssemgrav = max(s['rodssemgrav'], 5)
-    danograv = s['danograv']
-    danocrio = s['danocrio']
-    danocomms = s['podeusarcomms']
-    danoescudo = s['geradorescudo']
-    danohangar = s['danohangar']
-    danoasa = s['danoasa']
-    danoquartos = s['danoquartos']
-    danopropulsores = s['danopropulsores']
-    if danograv == True:
-        setstat('rodssemgrav', s['rodssemgrav'] +1)
-        setbuff('bmobil', (b['bmobil']) -2)
-        setbuff('bcover', (b['bcover']) -1)
+    if f['danograv']:
+        setfoo('rodssemgrav', f['rodssemgrav'] + 1)
+        mobilidade[6] -= 2
+        cover[6] -= 1
         print("Gerador de Gravidade danificado!")
-    desmaio = s['criodesmaio']
-    if danocrio == True or s['crio'] == 0 or s['crio'] == False:
-        setstat('criodesmaio', s['criodesmaio'] -1)
+
+    desmaio = f['criodesmaio']
+    if f['danocrio'] or getstat(crio) == 0:
+        setfoo('criodesmaio', desmaio - 1)
         print(f"Sistema de Criogenia desativado! \n Jogadores desmaiarão em {desmaio} rodadas!")
-    if danocrio == False:
-        if desmaio < 5:
-            setstat('criodesmaio', min(desmaio - int(~int(danocrio)), 5))
-    if danocomms == True:
+    elif desmaio < 5:
+        setfoo('criodesmaio', min(desmaio + 1, 5)) #simplificado: restaura um ponto por rodada
+
+    if not f['podeusarcomms']:
         print("Sistema de Comunicações danificado!")
-    if danoescudo == True:
-        print("Falha no Gerador de Escudos!")
-    if danomotor == True:
-        if falhamotor == True:
-            pass
-        else:
-            pass
-    if danopropulsores == True:
-        if s['novoprop'] == 1 and s['numprops'] != 9:
-            setstat('numprops', max(s['numprops']+1, 9))
+    if not f['genescudo']:
+        print("Falha no Gerador de Escudos!") #corrigido: consulta o estado usado por genescudo()
+    if f.get('danomotor', False) and f.get('falhamotor', False): #evita referências a nomes globais inexistentes
+        pass
+
+    if f['danopropulsores']:
+        if f['novoprop'] == 1 and f['numprops'] < 9:
+            setfoo('numprops', min(f['numprops'] + 1, 9)) #corrigido: respeita a capacidade máxima
             print('Um novo propulsor foi danificado!')
-            setstat('novoprop', 0)
+            setfoo('novoprop', 0)
         print("Propulsores danificados!")
-    depressurização = s['depressurização']
-    if danohangar == True:
-        setstat('depressurização', max(s['depressurização'] -1, 0))
-        print(f"Brecha no Microhangar! \n Depressurização em {depressurização} rodadas!")
-    if danohangar == False:
-        if depressurização < 3:
-            setstat('depressurização', min(depressurização - int(~int(danohangar)), 3))
-    if depressurização >= 0:
-        setstat('hangarselado', True)
-    if danoasa == True:
-        if s['novaasa'] == 1 and s['numprops'] != 4:
-            setstat('numasas', max(f['numasas']+1, 4))
+
+    depressurizacao_restante = depressurização[0]
+    if f['danohangar']:
+        depressurização[0] = max(depressurização[0] - 1, 0)
+        print(f"Brecha no Microhangar! \n Depressurização em {depressurizacao_restante} rodadas!")
+    elif depressurizacao_restante < 3:
+        depressurização[0] = min(depressurizacao_restante + 1, 3)
+    if depressurizacao_restante >= 0:
+        setfoo('hangarselado', True)
+
+    if f['danoasa']:
+        if f['novaasa'] == 1 and f['numasas'] < 4:
+            setfoo('numasas', min(f['numasas'] + 1, 4)) #corrigido: respeita as quatro asas
             print('Uma nova asa foi danificada!')
-            setstat('novoprop', 0)
+            setfoo('novaasa', 0) #corrigido: limpa o indicador de asa
         if f['numasas'] == 1:
             print("Asa Danificada!")
         elif f['numasas'] > 1:
             print("Asas danificadas!")
-    if danoarmazém == True:
-        armazém.pop(rand%18)
-    if danomedbay == True:
-        medbay.pop(rand%12)
-    if danocozinha == True:
-        cozinha.pop(rand%12)
-    if danoquartos == True:
-        if f['salacomum'] or f['quarto'] == 0:
-            salacomum.pop(rand%6)
-            setfoo('salacomum', True)
-        if f['quarto1dano'] or f['quarto'] == 1:
-            quarto1.pop(rand%6)
-            setfoo('quarto1dano', True)
-        if f['quarto2dano'] or f['quarto'] == 2:
-            quarto2.pop(rand%6)
-            setfoo('quarto2dano', True)
-        if f['quarto3dano'] or f['quarto'] == 3:
-            quarto3.pop(rand%6)
-            setfoo('quarto3dano', True)
-        if f['quarto4dano'] or f['quarto'] == 4:
-            quarto4.pop(rand%6)
-            setfoo('quarto4dano', True)
-        if f['quarto5dano'] or f['quarto'] == 5:
-            quarto5.pop(rand%6)
-            setfoo('quarto5dano', True)
 
-def overclock():
-    if s['motorquente']:
-        setstat('riscomotor', s['riscomotor'] -1)
+    for estado, inventario in (
+        ('danoarmazém', armazém), ('danomedbay', medbay), ('danocozinha', cozinha),
+    ):
+        if f[estado] and inventario:
+            inventario.pop(tuple(inventario)[rand() % len(inventario)]) #corrigido: escolhe uma chave existente
+
+    if f['danoquartos']:
+        for indice, estado, inventario in QUARTOS.values():
+            if f[estado] or f['quarto'] == indice:
+                if inventario:
+                    inventario.pop(tuple(inventario)[rand() % len(inventario)]) #corrigido: escolhe uma chave existente
+                setfoo(estado, True)
+
+def genescudo():
+    if f['genescudo']:
+        if f['escudoefetivof'] > 0:
+            setfoo('escudoefetivof', escudof[0]) #regenera apenas se o escudo não foi destruído
+        if f['escudoefetivot'] > 0:
+            setfoo('escudoefetivot', escudot[0]) #regenera apenas se o escudo não foi destruído
+
+#Overclocked: +5 Geração de Escudo, mas +¼ chance de fritar o Gerador por rodada utilizada (¼, ½ , ¾…)
+def atualizaroverclock(): #risco de fritar o motor usando overclock
+    if f['motorquente']:
+        if getstat(overclock) == True:
+            setfoo('riscoverclock', max(f['riscoverclock'] + 1,4))
+        riscomotor[0] = f['riscoverclock'] #corrigido: remove expressão inválida
         #marchas: 1/9, 1/6, 1/3
         #oclock: +¼ por rod 
-def eor():
+    else:
+        riscomotor[0] = getstat(riscomotor) - f['riscoverclock']
+def eor(): #executa atualizações no fechamento da rodada
     inventorycheck()
     genescudo()
     updater()
     danos()
-    overclock()
+    atualizaroverclock()
 
 #inimigo
 
 def criarinimigo(tipo):
+  if len(inimigos) > 10:
+    return 0
   n = len(inimigos)
   inimigos[f'i{(n+1)}'] = {
   "tipo" : tipo,
-  "hp" : 30 + float(((sin(rand()))*6.66)),
+  "hp" : 30 + float(((sin(rand())) * 6.66)),
   }
 
 i1 = {
     "tipo de inimigo": "leve",
-    "hp" : int((30 + (sin(rand()))*6.66)),
+    "hp" : int((30 + (sin(rand())) * 6.66)),
     "velocidade": 6,
     "mísseis" : rand()%2,
     "escudo": 10,
@@ -782,13 +556,6 @@ inimigos = {
   "i2" : i2,
   "i3" : i3
 } 
-
-
-
-
-#print(f'\n \n {"1"} in {i}')
-
-#tipos de escudo/casco recebem resistencias e danos diferentes de tipos de tiro diferentes
 
 def tipodano():
     tpd = rand()%6
@@ -844,102 +611,245 @@ def tipomissel():
             pass
         case 3: #foguetes
             pass
-#inimigos
 
-#[1 2 3 4...]
-#   ^ 
-#propriedades (velocidade, tipo, etc)
-
-#função de criar inimigos
-#função de ação dos inimigos
-#lógica de tripulação pro boarding
-#lógica de uso dos mísseis
-#lógica de movimento/espaçamento "3d" vulgo inferno provavelmente não vai rolar
-#se rolar usar alguma formula de projeção 3d em plano 2d pra descobrir as line of sight
-#provavelmente trampo
-#variação de velocidade talvez?
-#lógica de velocidade, tanto pra inimigo quanto pra player
-
-#antes do while:
-#-gerar inimigos, inventario, mapa, display e gerenciar inputs
 
 for x in range(1, 19):
-    arm(str(x), rand()%90)
+    additem(armazém, str(x), rand()%90)
 print(armazém)
-print(len(armazém))
+print(len(armazém)) 
 
 setfoo('turnosatuais', 0)
 
+
 import curses
+from dataclasses import dataclass, field
+from typing import Callable, List, Optional
 
-import curses #biblioteca endemoniada
+#sentinels
+EXIT = object()   # propagates up → quit
+BACK = object()   # close this level, return to parent
 
-menu = ['Piloto', 'Copiloto', 'Engenheiro', 'Atirador', 'Atirador AAE', 'Desligar Jogo']
-#o nome faz juz, essa bomba é amaldiçoada mesmo, roubei esse menu do Indian Pythonista
-#adaptei pra ser horizontal e tentei fazer um ascii
-#ultima opçao vai virar "confirmar ações na versao final
-def print_menu(stdscr, selected_col_idx):
-    stdscr.clear()
-    h, w = stdscr.getmaxyx() #tela
-    espaço = 3
-    ar = 2
-    botaotamanho = [len(col) + ar * 2 for col in menu]
-    menutamanho = sum(botaotamanho) + espaço * (len(menu) - 1)
-    x = (w - menutamanho) // 2
-    y = h - 4
-    for idx, col in enumerate(menu):
-        botaolargura = botaotamanho[idx]
-        stdscr.addstr(y+1, x, "┌" + "─" * (botaolargura - 2) + "┐") #aresta de cima
-        text = col.center(botaolargura - 2) #texto
-        if idx == selected_col_idx:
-            stdscr.attron(curses.color_pair(1))
-        stdscr.addstr(y + 2, x, "│" + text + "│") #borda
-        if idx == selected_col_idx:
-            stdscr.attroff(curses.color_pair(1))
-        stdscr.addstr(y + 3, x, "└" + "─" * (botaolargura - 2) + "┘") #aresta de baixo
-        x += botaolargura + espaço
-    stdscr.refresh()
+#data model
+@dataclass
+class opt:
+    label:   str
+    submenu: List["opt"]   = field(default_factory=list)
+    action:  Optional[Callable] = None   # (stdscr) → EXIT | BACK | None
 
+#micro action
+def exit_action(_): return EXIT
+def back_action(_): 
+    if f['turnosatuais'] == 3: 
+        return BACK 
 
-def print_center(stdscr, text):
+def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
-    x = w // 2 - len(text) // 2
-    y = h // 2
-    stdscr.addstr(y, x, text)
+
+    if draw_extras:
+        draw_extras(stdscr)
+
+    gap = 2
+    espaçamento = 1
+    button_widths = [len(item.label) + (espaçamento * 2) for item in items]
+    x = 1
+    y = h - 4
+
+    for idx, item in enumerate(items):
+        bw   = button_widths[idx]
+        text = item.label.center(bw - 2)
+        stdscr.addstr(y + 1, x, "┌" + "─" * (bw - 2) + "┐")
+        if idx == selected:
+            stdscr.attron(curses.color_pair(1))
+        stdscr.addstr(y + 2, x, "│" + text + "│")
+        if idx == selected:
+            stdscr.attroff(curses.color_pair(1))
+        stdscr.addstr(y + 3, x, "└" + "─" * (bw - 2) + "┘")
+        x += bw + gap
+
     stdscr.refresh()
 
+def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
+    stdscr.clear()
+    h, w = stdscr.getmaxyx()
 
-def main(stdscr):
-    # Turn off cursor blinking
-    curses.curs_set(0)
-    # Color scheme for selected column
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    # Specify the current selected column
-    current_col = 0
-    # Print the menu
-    print_menu(stdscr, current_col)
-    while 1:
+    if draw_extras:
+        draw_extras(stdscr)
+
+    for idx, item in enumerate(items):
+        label = ("▶ " if item.submenu else "  ") + item.label
+        x = w // 2 - len(label) // 2
+        y = h // 2 - len(items) // 2 + idx
+        if idx == selected:
+            stdscr.attron(curses.color_pair(1))
+            stdscr.addstr(y, x, label)
+            stdscr.attroff(curses.color_pair(1))
+        else:
+            stdscr.addstr(y, x, label)
+
+    stdscr.refresh()
+
+def run_menu(stdscr, items, layout="vertical", draw_extras=None):
+    """
+    layout="horizontal" → LEFT/RIGHT keys, box-buttons at the bottom.
+    layout="vertical"   → UP/DOWN keys, centered list (default for submenus).
+    Submenus always open as vertical regardless of their parent's layout.
+    draw_extras(stdscr) is painted before menu items on every redraw,
+    so you can overlay text boxes, live game values, banners, etc.
+    """
+    current  = 0
+    draw     = draw_menu_horizontal if layout == "horizontal" else draw_menu_vertical
+    key_prev = curses.KEY_LEFT  if layout == "horizontal" else curses.KEY_UP
+    key_next = curses.KEY_RIGHT if layout == "horizontal" else curses.KEY_DOWN
+
+    draw(stdscr, items, current, draw_extras)
+
+    while True:
         key = stdscr.getch()
-        if key == curses.KEY_LEFT and current_col > 0:
-            current_col -= 1
-        elif key == curses.KEY_RIGHT and current_col < len(menu) - 1:
-            current_col += 1
-        elif key == curses.KEY_ENTER or key in [10, 13]:
-            print_center(
-                stdscr,
-                "You selected '{}'".format(menu[current_col])
-            )
-            stdscr.getch()
-            # If user selected last column, exit the program
-            if current_col == len(menu) - 1:
-                setfoo('gameon', 0)
-                break
-        print_menu(stdscr, current_col)
+
+        if key == key_prev and current > 0:
+            current -= 1
+
+        elif key == key_next and current < len(items) - 1:
+            current += 1
+
+        elif key in (curses.KEY_ENTER, 10, 13):
+            item = items[current]
+            if item.submenu:
+                result = run_menu(stdscr, item.submenu)   # always vertical
+                if result is EXIT:
+                    return EXIT
+                # BACK from child → fall through, redraw this level
+            elif item.action:
+                result = item.action(stdscr)
+                if result is EXIT:
+                    return EXIT
+                if result is BACK:
+                    return BACK
+                # None → stay, redraw this level
+
+        elif key == 27:   # Escape → go up one level
+            return BACK
+
+        draw(stdscr, items, current, draw_extras)
+
+#game actions
+def confirmar_acoes(stdscr):
+    if f['turnosatuais'] < 3:
+        turnos = f'Você ainda tem {f['turnosatuais']} ações!'
+        stdscr.addstr((h // 2) - 2, w // 2 - len(turnos) // 2, turnos)
+    h, w = stdscr.getmaxyx()
+    stdscr.clear()
+    msg = "Ações Confirmadas"
+    stdscr.addstr(h // 2, w // 2 - len(msg) // 2, msg)
+    stdscr.refresh()
+    timer(25)
 
 
-while f['gameon'] == 1:
-    updater()
+
+def escape_seq():
+    setfoo('gameon', 0)
+    setfoo('gamewin', 1)
+
+def force_confirm():
+    setfoo('turnosatuais', 3)
+
+# ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
+MENU = [
+    opt("Copiloto", submenu=[
+        opt("Acelerar"),
+        opt("Trocar de Marcha"),
+        opt("Manobrar"),
+        opt("Navegar"),
+        opt("Usar Utilitários"),
+        opt("Ajudar Engenheiro"),
+        opt("Atirar em Inimigos"),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),]),        
+        ]),
+
+    opt("Copiloto", submenu=[
+        opt("Acelerar"),
+        opt("Trocar de Marcha"),
+        opt("Manobrar"),
+        opt("Navegar"),
+        opt("Usar Utilitários"),
+        opt("Ajudar Engenheiro"),
+        opt("Atirar em Inimigos"),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),]),        
+        ]),
+
+    opt("Engenheiro", submenu=[
+        opt("Consertar",   action=lambda s: None),
+        opt("Abrir Painel de Utilitários", submenu=[
+            opt("Ajustar Gravidade", action=lambda s: None),
+            opt("Ajustar Sonar",   action=lambda s: None),
+            opt("Ajustar Rádio",   action=lambda s: None),
+            opt("Ajustar Criogenia", action=lambda s: None),
+            opt("Voltar", action = back_action)
+        ]),
+        opt("Deslocar", action=lambda s: None),
+        opt("Interagir", action=lambda s: None),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),
+        ]),
+        opt("Voltar",        action=back_action),
+    ]),   
+
+    opt("Atirador",submenu=[
+        opt("Atirar em um Inimigo",   action=lambda s: None),
+        opt("Abrir Painel de Utilitários", submenu=[
+            opt("Ajustar Gravidade", action=lambda s: None),
+            opt("Ajustar Sonar",   action=lambda s: None),
+            opt("Ajustar Rádio",   action=lambda s: None),
+            opt("Ajustar Criogenia", action=lambda s: None),
+            opt("Voltar", action=back_action)
+        ]),
+        opt("Abrir Painel de Comunicações", submenu=[
+            opt("Interceptar Comms Inimigas", action=lambda s: None),
+            opt("Enviar Mensagem", action=lambda s: None),
+            opt("Sabotar Comms Inimigas", action=lambda s: None),
+            opt("Voltar", action=back_action)
+        ]),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),
+        ]),
+        opt("Voltar",        action=back_action),
+    ]),
+
+    opt("Atirador AAE", submenu=[
+        opt("Atirar em um Inimigo",   action=lambda s: None),
+        opt("Trocar Tipo de Munição", action=lambda s: None),
+        opt("Procurar Ponto Fraco",   action=lambda s: None),
+        opt("Levantar",               action=lambda s: None),
+        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
+        opt("Sim", action = force_confirm),
+        opt("Não", action = lambda s: None),
+        ]),
+        opt("Voltar",        action = back_action),
+    ]),
+
+    opt("Confirmar Ações", action=confirmar_acoes),
+    opt("Desligar Jogo",   action=escape_seq),
+]
+
+
+#entry point
+def main(stdscr):
+    curses.curs_set(0)
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    run_menu(stdscr, MENU, layout="horizontal")
+    # To add game-state overlays to the top layer:
+    # run_menu(stdscr, MENU, layout="horizontal", draw_extras=my_hud_fn)
+
+
+
+while f['gameon'] == 1: #stats derivados são calculados diretamente com getstat()
     if f['foo'] > 1 or f['foo'] <= 0:
         setfoo('foo', 1)
     if f['gamewin'] == 1:
@@ -951,10 +861,19 @@ while f['gameon'] == 1:
         setfoo('turnosatuais', f['turnosatuais'] + 1)
     setfoo('rods', f['rods']+1)
     curses.wrapper(main)
+    if f['turnosatuais'] >= 3: #fecha a rodada após três ações
+        eor() #processa danos contínuos e atualizações de fim de rodada
+        setfoo('rods', f['rods'] + 1) #conta rodadas completas
+        setfoo('turnosatuais', 0) #prepara a próxima rodada
+
+
+def atirador_aae(ação):
+    match ação:
+        case "atirar":
+            pass
+
 
 #criar função pra ler input e output
 #criar cli bonitinha
 #tabs 1 2 3 4 5 com ações de cada player, quando todas escolhidas, turno dos inimigos
 #calculo e ajustes, repete
-
-
