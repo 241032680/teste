@@ -1,12 +1,12 @@
 import array
 
-def initstat():
-    return array.array('b', [0]*8)
+def initstat(n):
+    return array.array('b', [0]*15 + [n])
 
 def getstat(stat):
-    return sum(stat)
+    return sum(stat) - stat[15]
 
-rolls = initstat()
+rolls = initstat(0)
 
 r = {}
 def setrand(num, val):
@@ -36,48 +36,74 @@ setrand('a', 42)
 setrand('b', 67)
 setrand('z', 1)
 
-mira=furtividade=desvio=comunicaçao=navegaçao=abrirtravas=conserto=pilotagem=tecnica=utilitarios=saude=sorte=agilidade=percepçao=carisma=resistencia=força=intimidação=initstat()
+mira=initstat(1)
+furtividade=initstat(2)
+desvio=initstat(3)
+comunicaçao=initstat(4)
+navegaçao=initstat(5)
+abrirtravas=initstat(6)
+conserto=initstat(7)
+pilotagem=initstat(8)
+tecnica=initstat(9)
+utilitarios=initstat(10)
+saude=initstat(11)
+sorte=initstat(12)
+agilidade=initstat(13)
+percepçao=initstat(14)
+carisma=initstat(15)
+resistencia=initstat(16)
+força=initstat(17)
+intimidação=initstat(18)
 
+
+bonus_cargo = {
+    'aae': [(mira[15], 2), (furtividade[15], 1), (desvio[15], 1)],
+    'piloto': [(conserto[15], 3), (comunicaçao[15], 3), (navegaçao[15], 3),
+               (pilotagem[15], 3), (tecnica[15], 3), (utilitarios[15], 3),
+               (percepçao[15], 1), (carisma[15], 1)],
+    'copiloto': [(conserto[15], 2), (comunicaçao[15], 2), (navegaçao[15], 2),
+                 (pilotagem[15], 2), (tecnica[15], 2), (utilitarios[15], 2),
+                 (saude[15], 1), (sorte[15], 1), (agilidade[15], 1)],
+    'atirador': [(força, 2), (comunicaçao[15], 1), (intimidação[15], 1),
+                 (resistencia[15], 1)],
+    'engenheiro': {conserto[15]: 3, abrirtravas[15]: 2, comunicaçao[15]: 1,
+                   navegaçao[15]: 1, pilotagem[15]: 1, tecnica[15]: 1,
+                   utilitarios[15]: 1}
+}
+#print(bonus_cargo)
+dts= [(10, 12, 14), (11, 14, 18), (12, 16, 21), (13, 18, 24), (18, 26, 36)]
 
 
 def rolar(teste, cargo):
-    match cargo:
-        case 'aae':
-            mira[7], furtividade[7], desvio[7] = 2, 1, 1
-        case 'piloto':
-            conserto[7], comunicaçao[7], navegaçao[7], pilotagem[7], tecnica[7], utilitarios[7], percepçao[7], carisma[7] = 3,3,3,3,3,3,1,1
-        case 'copiloto':
-            conserto[7], comunicaçao[7], navegaçao[7], pilotagem[7], tecnica[7], utilitarios[7], saude[7], sorte[7], agilidade[7] = 2, 2, 2, 2, 2, 2, 1, 1, 1
-        case 'atirador':
-            força[7], comunicaçao[7], intimidação[7], resistencia[7] = 2, 1, 1, 1
-        case 'engenheiro':
-            conserto[7], abrirtravas[7], comunicaçao[7], navegaçao[7], pilotagem[7], tecnica[7], utilitarios[7] = 3, 2, 1, 1, 1, 1, 1
+    print(teste)
+    if teste[15] in bonus_cargo[cargo]:
+        teste[7] = bonus_cargo[cargo][teste[15]]
     stat = getstat(teste)
-    bonus = stat%5 + getstat(rolls)
-    match cargo:
-        case 'aae':
-            mira[7], furtividade[7], desvio[7] = 0, 0, 0
-        case 'piloto':
-            conserto[7], comunicaçao[7], navegaçao[7], pilotagem[7], tecnica[7], utilitarios[7], percepçao[7], carisma[7] = 0,0,0,0,0,0,0,0
-        case 'copiloto':
-            conserto[7], comunicaçao[7], navegaçao[7], pilotagem[7], tecnica[7], utilitarios[7], saude[7], sorte[7], agilidade[7] = 0, 0, 0, 0, 0, 0, 0, 0, 0
-        case 'atirador':
-            força[7], comunicaçao[7], intimidação[7], resistencia[7] = 0, 0, 0, 0
-        case 'engenheiro':
-            conserto[7], abrirtravas[7], comunicaçao[7], navegaçao[7], pilotagem[7], tecnica[7], utilitarios[7] = 0, 0, 0, 0, 0, 0, 0
+    print(teste)
+    bonus = stat % 5 + getstat(rolls)
+    print(bonus)
     level = min((stat//5), 5)
+    print(level)
     dice = (6, 8, 10, 12, 20)
+    print(dice[level])
     result = [((rand()%dice[level])+1), ((rand()%dice[level])+1), ((rand()%dice[level])+1)]
-    for idx in result:
-        result[idx] += bonus
-
-    cargos = (Conserto, Comunicações, Força, Intimidação, Medicina, Mira, Percepção, Saúde, Técnica) = [
-        (+2, +2, +3), (-2, +2, +4), (+2, +1, +3),
-        (+3, +3, +3), (+3, +2, +3), (+2, +0, +2), 
-        (+3, +0, +2), (+2, -1, +1), (+2, -1, +1)]
-
-    #for combos in cargos:
-    #    combo1 = cargo[1][1]
-    #if result>=dt and 
-
+    print(result)
+    soma = sum(result)
+    print(soma)
+    if soma == dice[level]*3:
+        return "CRIT"
+    soma += bonus
+    print(soma)
+    facil = dts[level][0]
+    medio = dts[level][1]
+    dificil = dts[level][2]
+    if soma < facil:
+        return "FAIL"
+    if soma >= facil and soma < medio:
+        return "EASY"
+    if soma >= medio and soma < dificil:
+        return "MEDIUM"
+    if soma >= dificil:
+        return "HARD"
+print(rolar(comunicaçao, 'engenheiro'))
 

@@ -72,65 +72,41 @@ def setfoo(foo, valor):
     f[foo] = valor
 
 #stats nave
-numtorpedos = initstat()
+numtorpedos,numaae,numfrontal,hp,escudo,velmax,escudot,escudof,direct,overclock,modoativo = initstat()
+grav = sonar,radio,crio,danotorp,danoaae,danofront,criodesmaio,depressurização,riscomotor = initstat()
 numtorpedos[0] = 5
-numaae = initstat()
 numaae[0] = 8
-numfrontal = initstat()
 numfrontal[0] = 6
-hp = initstat()
 hp[0] = 20
-escudo = initstat()
-velmax = initstat()
 velmax[0] = 7
-escudof = initstat()
-escudot = initstat()
-overclock = initstat()
-direct = initstat()
 direct[0] = 1
-modoativo = initstat()
 modoativo[0] = 1
-grav = initstat()
 grav[0] = 1
-sonar = initstat()
 sonar[0] = 1
-radio = initstat()
 radio[0] = 1
-crio = initstat()
 crio[0] = 1
-danotorp = initstat()
 danotorp[0] = 1
-danoaae = initstat()
 danoaae[0] = 1
-danofront = initstat()
 danofront[0] = 1
-criodesmaio = initstat()
 criodesmaio[0] = 5
-depressurização = initstat()
 depressurização[0] = 3
-riscomotor = initstat()
 riscomotor[0] = 8
-pilotagem = initstat()
-mobilidade = initstat()
-rolls = initstat()
-cover = initstat()
-mira = initstat()
-percepçao = initstat()
-utilitarios = initstat()
-pilotagem[0] = 1
-mobilidade[0] = 1
-rolls[0] = 1
-cover[0] = 1
-mira[0] = 1
-percepçao[0] = 1
-utilitarios[0] = 1
+
+#stats
+nave = pilotagem = utilitarios =comunicaçao = conserto = navegaçao = tecnica = initstat()
+nave[0],pilotagem[0],utilitarios[0],comunicaçao[0],conserto[0],navegaçao[0],tecnica[0]= 0,1,1,1,1,1,1
+combate = curtoalc = medioalc = longoalc = armasenergia = armasprojetil = bastoes = corpoacorpo = laminas = mira = percepçao = resistencia = initstat()
+combate[0],curtoalc[0],medioalc[0],longoalc[0],armasenergia[0],armasprojetil[0],bastoes[0],corpoacorpo[0],laminas[0],mira[0],percepçao[0],resistencia[0] = 0,1,1,1,1,1,1,1,1,1,1,1
+mobilidade[0],rolls[0],cover[0],mira[0],percepçao[0] = 1,1,1,1,1
+
+
 #buffs/debuffs modo: stat[1]
 #buffs/debuffs crio: stat[2]
 #buffs/debuffs sonar: stat[3]
 #buffs/debuffs radio: stat[4]
 #buffs/debuffs grav: stat[5]
 #buffs/debuffs danonave: stat[6]
-#stats/debuffs players
+#stats/debuffs players: stat [7]
 
 #randomizador
 setrand('d', 1)
@@ -515,7 +491,6 @@ def atualizaroverclock(): #risco de fritar o motor usando overclock
 def eor(): #executa atualizações no fechamento da rodada
     inventorycheck()
     genescudo()
-    updater()
     danos()
     atualizaroverclock()
 
@@ -619,6 +594,48 @@ print(armazém)
 print(len(armazém)) 
 
 setfoo('turnosatuais', 0)
+
+
+#testes de DT
+
+tipodadonivel = {1: 6, 2: 8, 3: 10, 4: 12, 5: 20}
+
+DT = {1: (10, 12, 14),
+    2: (11, 14, 18),
+    3: (12, 16, 21),
+    4: (13, 18, 24),
+    5: (18, 26, 36)}
+
+criançasproblema = {
+    'conserto': (2, 2, 3),
+    'comunicacao': (-2, 2, 4), 'comunicacoes': (-2, 2, 4),
+    'forca': (2, 1, 3),
+    'intimidacao': (3, 3, 3),
+    'medicina': (3, 2, 3),
+    'mira': (2, 0, 2),
+    'percepcao': (3, 0, 2),
+    'saude': (2, -1, 1),
+    'tecnica': (2, -1, 1),
+} #casos especiais
+
+bonuscargosempre = {
+    'piloto': {'nave': 3, 'percepcao': 1, 'carisma': 1},
+    'engenheiro': {'conserto': 3, 'abrir travas': 2},
+    'atirador': {'forca': 2, 'comunicacao': 1, 'intimidacao': 1, 'resistencia': 1},
+    'atirador aae': {'mira': 3, 'furtividade': 1, 'desvio': 1},
+    'copiloto': {'nave': 2, 'saude': 1, 'sorte': 1, 'agilidade': 1},
+} 
+
+def rolar_teste(stats, dificuldade='medio', cargo=None, nomes_stats=None,
+                 bonus_cargo=0, modificador_stat=0, modificador_rolagem=0,
+                 caso_especial=None, dados_forcados=None):
+    match cargo:
+        case 'piloto':
+            nave[7], percepçao[7] = 3, 2
+        case 'engenheiro':
+        case 'atirador':
+        case 'atirador_aae':
+        case 'copiloto':
 
 
 import curses
@@ -855,7 +872,6 @@ while f['gameon'] == 1: #stats derivados são calculados diretamente com getstat
     if f['gamewin'] == 1:
         setfoo('gameon', 0)
     if f['turnosatuais'] <3:
-        updater()
         setfoo('turnos', f['turnos']+1)
         #[coisas dentro do turno]
         setfoo('turnosatuais', f['turnosatuais'] + 1)
