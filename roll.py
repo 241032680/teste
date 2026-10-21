@@ -36,24 +36,7 @@ setrand('a', 42)
 setrand('b', 67)
 setrand('z', 1)
 
-mira=initstat(1)
-furtividade=initstat(2)
-desvio=initstat(3)
-comunicaçao=initstat(4)
-navegaçao=initstat(5)
-abrirtravas=initstat(6)
-conserto=initstat(7)
-pilotagem=initstat(8)
-tecnica=initstat(9)
-utilitarios=initstat(10)
-saude=initstat(11)
-sorte=initstat(12)
-agilidade=initstat(13)
-percepçao=initstat(14)
-carisma=initstat(15)
-resistencia=initstat(16)
-força=initstat(17)
-intimidação=initstat(18)
+
 
 
 bonus_cargo = {

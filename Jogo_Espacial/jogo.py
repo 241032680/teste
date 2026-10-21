@@ -3,10 +3,10 @@ import array
 
 
 def getstat(stat):
-    return sum(stat)
+    return sum(stat) - stat[15]
 
-def initstat():
-    return array.array('b', [0]*8)
+def initstat(n):
+    return array.array('b', [0]*15 + [n])
 
 def timer(frames):
     while frames:
@@ -72,33 +72,70 @@ def setfoo(foo, valor):
     f[foo] = valor
 
 #stats nave
-numtorpedos,numaae,numfrontal,hp,escudo,velmax,escudot,escudof,direct,overclock,modoativo = initstat()
-grav = sonar,radio,crio,danotorp,danoaae,danofront,criodesmaio,depressurização,riscomotor = initstat()
-numtorpedos[0] = 5
-numaae[0] = 8
-numfrontal[0] = 6
-hp[0] = 20
-velmax[0] = 7
-direct[0] = 1
-modoativo[0] = 1
-grav[0] = 1
-sonar[0] = 1
-radio[0] = 1
-crio[0] = 1
-danotorp[0] = 1
-danoaae[0] = 1
-danofront[0] = 1
-criodesmaio[0] = 5
-depressurização[0] = 3
-riscomotor[0] = 8
+numtorpedos= initstat(1)
+numaae= initstat(2)
+numfrontal=  initstat(3)
+hp = initstat(4)
+escudo= initstat(5)
+velmax= initstat(6)
+escudot= initstat(7)
+escudof=  initstat(8)
+direct= initstat(9)
+overclock= initstat(10)
+modoativo = initstat(11)
+grav = initstat(12)
+sonar = initstat(13) 
+radio = initstat(14)
+crio = initstat(15)
+danotorp = initstat(16)
+danoaae = initstat(17)
+danofront = initstat(18)
+criodesmaio = initstat(19)
+depressurização = initstat(20)
+riscomotor = initstat(21)
+numtorpedos[0],numaae[0],numfrontal[0],hp[0],velmax[0],direct[0],modoativo[0],grav[0],sonar[0],radio[0],crio[0],danotorp[0],danoaae[0],danofront[0],criodesmaio[0],depressurização[0],riscomotor[0] = 5,8,6,20,7,1,1,1,1,1,1,1,1,1,5,3,8
 
 #stats
-nave = pilotagem = utilitarios =comunicaçao = conserto = navegaçao = tecnica = initstat()
-nave[0],pilotagem[0],utilitarios[0],comunicaçao[0],conserto[0],navegaçao[0],tecnica[0]= 0,1,1,1,1,1,1
-combate = curtoalc = medioalc = longoalc = armasenergia = armasprojetil = bastoes = corpoacorpo = laminas = mira = percepçao = resistencia = initstat()
-combate[0],curtoalc[0],medioalc[0],longoalc[0],armasenergia[0],armasprojetil[0],bastoes[0],corpoacorpo[0],laminas[0],mira[0],percepçao[0],resistencia[0] = 0,1,1,1,1,1,1,1,1,1,1,1
-mobilidade[0],rolls[0],cover[0],mira[0],percepçao[0] = 1,1,1,1,1
-
+rolls = initstat(0)
+pilotagem = initstat(22)
+utilitarios = initstat(23)
+comunicaçao = initstat(24)
+conserto = initstat(25)
+navegaçao = initstat(26)
+tecnica = initstat(27)
+pilotagem[0],utilitarios[0],comunicaçao[0],conserto[0],navegaçao[0],tecnica[0]= 1,1,1,1,1,1
+cover = initstat(28)
+curtoalc= initstat(29)
+medioalc= initstat(30)
+longoalc= initstat(31)
+armasenergia= initstat(32)
+armasprojetil= initstat(33)
+bastoes= initstat(34)
+corpoacorpo= initstat(35)
+laminas= initstat(36)
+mira= initstat(37)
+percepçao= initstat(38)
+resistencia = initstat(39)
+curtoalc[0],medioalc[0],longoalc[0],armasenergia[0],armasprojetil[0],bastoes[0],corpoacorpo[0],laminas[0],mira[0],percepçao[0],resistencia[0] = 1,1,1,1,1,1,1,1,1,1,1
+rolls[0],cover[0],mira[0],percepçao[0] = 1,1,1,1
+agilidade = initstat(40)
+corridacurta = initstat(41)
+corridalonga = initstat(42)
+desvio = initstat(43)
+escalar = initstat(44)
+equilibrio = initstat(45)
+furtividade = initstat(46)
+nataçao = initstat(47)
+nocaute = initstat(48)
+salto = initstat(49)
+temperaturasextremas = initstat(50)
+agilidade[0],corridacurta[0],corridalonga[0],desvio[0],escalar[0],equilibrio[0],furtividade[0],nataçao[0],nocaute[0],salto[0],temperaturasextremas[0] = 1,1,1,1,1,1,1,1,1,1,1
+carisma = initstat(51)
+sorte = initstat(52)
+saude = initstat(53)
+força = initstat(54)
+intimidação = initstat(55)
+abrirtravas = initstat(56)
 
 #buffs/debuffs modo: stat[1]
 #buffs/debuffs crio: stat[2]
@@ -107,6 +144,7 @@ mobilidade[0],rolls[0],cover[0],mira[0],percepçao[0] = 1,1,1,1,1
 #buffs/debuffs grav: stat[5]
 #buffs/debuffs danonave: stat[6]
 #stats/debuffs players: stat [7]
+#buffs cargo: stat[8]
 
 #randomizador
 setrand('d', 1)
@@ -180,7 +218,7 @@ MODOS = {
 
 def setmodo(modo): #modos de distribuição de energia
     if modo not in MODOS:
-        modo = 1 #corrigido: evita recursão para o modo padrão
+        modo = 1
     modoativo[0] = modo
     (escudo[1], velmax[1], danoaae[1], danotorp[1],
      danofront[1], pilotagem[1], utilitarios[1]) = MODOS[modo]
@@ -358,7 +396,7 @@ def hitnave(intensidade): #acertos de inimigos
 
         elif intensidade == 'm':
             match rand() % 10:
-		case 0|8:
+                case 0|8:
                     pass
                 case 9:
                     setfoo('danoasa', True)
@@ -371,7 +409,7 @@ def hitnave(intensidade): #acertos de inimigos
         print(f"{y} levou um tiro {z}!")
 
 #ações players
-def conserto(lugar):
+def consertar(lugar):
     if lugar == 'prop':
         setfoo('numprops', f['numprops'] - 1)
         velmax[6] += 1 + f['pesadoprop']
@@ -562,7 +600,6 @@ def tipoescudo():
         case 7:
             return "Scrambler" #Dificulta lock in misseis e torretas quando 100%, demora mais p/ começar a regenerar
 
-
 def tipomissel():
     msl = rand()%4
     match msl:
@@ -587,7 +624,6 @@ def tipomissel():
         case 3: #foguetes
             pass
 
-
 for x in range(1, 19):
     additem(armazém, str(x), rand()%90)
 print(armazém)
@@ -595,47 +631,59 @@ print(len(armazém))
 
 setfoo('turnosatuais', 0)
 
-
 #testes de DT
+bonus_cargo = {
+    'aae': [(mira[15], 2), (furtividade[15], 1), (desvio[15], 1)],
+    'piloto': [(conserto[15], 3), (comunicaçao[15], 3), (navegaçao[15], 3),
+               (pilotagem[15], 3), (tecnica[15], 3), (utilitarios[15], 3),
+               (percepçao[15], 1), (carisma[15], 1)],
+    'copiloto': [(conserto[15], 2), (comunicaçao[15], 2), (navegaçao[15], 2),
+                 (pilotagem[15], 2), (tecnica[15], 2), (utilitarios[15], 2),
+                 (saude[15], 1), (sorte[15], 1), (agilidade[15], 1)],
+    'atirador': [(força, 2), (comunicaçao[15], 1), (intimidação[15], 1),
+                 (resistencia[15], 1)],
+    'engenheiro': {conserto[15]: 3, abrirtravas[15]: 2, comunicaçao[15]: 1,
+                   navegaçao[15]: 1, pilotagem[15]: 1, tecnica[15]: 1,
+                   utilitarios[15]: 1}
+}
+#print(bonus_cargo)
+dts= [(10, 12, 14), (11, 14, 18), (12, 16, 21), (13, 18, 24), (18, 26, 36)]
 
-tipodadonivel = {1: 6, 2: 8, 3: 10, 4: 12, 5: 20}
+def rolar(teste, cargo):
+    print(teste)
+    if teste[15] in bonus_cargo[cargo]:
+        teste[8] = bonus_cargo[cargo][teste[15]]
+    stat = getstat(teste)
+    print(teste)
+    bonus = stat % 5 + getstat(rolls)
+    print(bonus)
+    level = min((stat//5), 5)
+    print(level)
+    dice = (6, 8, 10, 12, 20)
+    print(dice[level])
+    result = [((rand()%dice[level])+1), ((rand()%dice[level])+1), ((rand()%dice[level])+1)]
+    print(result)
+    soma = sum(result)
+    print(soma)
+    if soma == dice[level]*3:
+        return "CRIT"
+    soma += bonus
+    print(soma)
+    facil = dts[level][0]
+    medio = dts[level][1]
+    dificil = dts[level][2]
+    teste[8] = 0
+    if soma < facil:
+        return "FAIL"
+    if soma >= facil and soma < medio:
+        return "EASY"
+    if soma >= medio and soma < dificil:
+        return "MEDIUM"
+    if soma >= dificil:
+        return "HARD"
+#print(rolar(comunicaçao, 'engenheiro'))
 
-DT = {1: (10, 12, 14),
-    2: (11, 14, 18),
-    3: (12, 16, 21),
-    4: (13, 18, 24),
-    5: (18, 26, 36)}
 
-criançasproblema = {
-    'conserto': (2, 2, 3),
-    'comunicacao': (-2, 2, 4), 'comunicacoes': (-2, 2, 4),
-    'forca': (2, 1, 3),
-    'intimidacao': (3, 3, 3),
-    'medicina': (3, 2, 3),
-    'mira': (2, 0, 2),
-    'percepcao': (3, 0, 2),
-    'saude': (2, -1, 1),
-    'tecnica': (2, -1, 1),
-} #casos especiais
-
-bonuscargosempre = {
-    'piloto': {'nave': 3, 'percepcao': 1, 'carisma': 1},
-    'engenheiro': {'conserto': 3, 'abrir travas': 2},
-    'atirador': {'forca': 2, 'comunicacao': 1, 'intimidacao': 1, 'resistencia': 1},
-    'atirador aae': {'mira': 3, 'furtividade': 1, 'desvio': 1},
-    'copiloto': {'nave': 2, 'saude': 1, 'sorte': 1, 'agilidade': 1},
-} 
-
-def rolar_teste(stats, dificuldade='medio', cargo=None, nomes_stats=None,
-                 bonus_cargo=0, modificador_stat=0, modificador_rolagem=0,
-                 caso_especial=None, dados_forcados=None):
-    match cargo:
-        case 'piloto':
-            nave[7], percepçao[7] = 3, 2
-        case 'engenheiro':
-        case 'atirador':
-        case 'atirador_aae':
-        case 'copiloto':
 
 
 import curses
@@ -659,19 +707,43 @@ def back_action(_):
     if f['turnosatuais'] == 3: 
         return BACK 
 
+status = ["STATUS DA NAVE",
+        f"Casco: {getstat(hp)}",
+        f"Escudo frontal: {escudof[0]}",
+        f"Escudo traseiro: {escudot[0]}",
+        f"Velocidade máxima: {getstat(velmax)}",
+        f"Modo de energia: {getstat(modoativo)}",
+        f"Overclock: {'Ligado' if getstat(overclock) else 'Desligado'}",
+        f"Criogenia: {'Ligada' if getstat(crio) else 'Desligada'}",
+        f"Sonar: {'Ligado' if getstat(sonar) else 'Desligado'}",
+        f"Rádio: {'Ligado' if getstat(radio) else 'Desligado'}",
+        f"Gravidade: {'Ligada' if getstat(grav) else 'Desligada'}"]
+
+
+def mostrar_status(stdscr, items):
+    largura = max(len(text) for text in items) + 2
+    y, x = stdscr.getmaxyx()
+    x = 1
+    stdscr.addstr(1, x, "┌" + "─" * largura + "┐")
+
+    for i, text in enumerate(items):
+        stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
+    stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
+
+def draw_extras(stdscr):
+    mostrar_status(stdscr, status)
+
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
-
+    draw_extras(stdscr)
     if draw_extras:
         draw_extras(stdscr)
-
     gap = 2
     espaçamento = 1
     button_widths = [len(item.label) + (espaçamento * 2) for item in items]
     x = 1
     y = h - 4
-
     for idx, item in enumerate(items):
         bw   = button_widths[idx]
         text = item.label.center(bw - 2)
@@ -683,16 +755,13 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
             stdscr.attroff(curses.color_pair(1))
         stdscr.addstr(y + 3, x, "└" + "─" * (bw - 2) + "┘")
         x += bw + gap
-
     stdscr.refresh()
 
 def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
-
     if draw_extras:
         draw_extras(stdscr)
-
     for idx, item in enumerate(items):
         label = ("▶ " if item.submenu else "  ") + item.label
         x = w // 2 - len(label) // 2
@@ -718,22 +787,17 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=None):
     draw     = draw_menu_horizontal if layout == "horizontal" else draw_menu_vertical
     key_prev = curses.KEY_LEFT  if layout == "horizontal" else curses.KEY_UP
     key_next = curses.KEY_RIGHT if layout == "horizontal" else curses.KEY_DOWN
-
     draw(stdscr, items, current, draw_extras)
-
     while True:
         key = stdscr.getch()
-
         if key == key_prev and current > 0:
             current -= 1
-
         elif key == key_next and current < len(items) - 1:
             current += 1
-
         elif key in (curses.KEY_ENTER, 10, 13):
             item = items[current]
             if item.submenu:
-                result = run_menu(stdscr, item.submenu)   # always vertical
+                result = run_menu(stdscr, item.submenu, draw_extras=draw_extras)
                 if result is EXIT:
                     return EXIT
                 # BACK from child → fall through, redraw this level
@@ -744,10 +808,8 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=None):
                 if result is BACK:
                     return BACK
                 # None → stay, redraw this level
-
         elif key == 27:   # Escape → go up one level
             return BACK
-
         draw(stdscr, items, current, draw_extras)
 
 #game actions
@@ -761,8 +823,6 @@ def confirmar_acoes(stdscr):
     stdscr.addstr(h // 2, w // 2 - len(msg) // 2, msg)
     stdscr.refresh()
     timer(25)
-
-
 
 def escape_seq():
     setfoo('gameon', 0)
@@ -855,16 +915,13 @@ MENU = [
     opt("Desligar Jogo",   action=escape_seq),
 ]
 
-
 #entry point
 def main(stdscr):
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    run_menu(stdscr, MENU, layout="horizontal")
+    run_menu(stdscr, MENU, layout="horizontal", draw_extras=draw_extras)
     # To add game-state overlays to the top layer:
     # run_menu(stdscr, MENU, layout="horizontal", draw_extras=my_hud_fn)
-
-
 
 while f['gameon'] == 1: #stats derivados são calculados diretamente com getstat()
     if f['foo'] > 1 or f['foo'] <= 0:
@@ -882,12 +939,10 @@ while f['gameon'] == 1: #stats derivados são calculados diretamente com getstat
         setfoo('rods', f['rods'] + 1) #conta rodadas completas
         setfoo('turnosatuais', 0) #prepara a próxima rodada
 
-
 def atirador_aae(ação):
     match ação:
         case "atirar":
             pass
-
 
 #criar função pra ler input e output
 #criar cli bonitinha
