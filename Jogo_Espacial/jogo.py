@@ -8,13 +8,15 @@ com = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
 
 def getstat(stat):
     if stat[15] in mob:
-        return sum(stat) - stat[15] + sum(mobilidade) - mobilidade[15] + sum(rolls)
-    if stat[15] in ger:
-        return sum(stat) - stat[15] + sum(geral) - geral[15] + sum(rolls)
-    if stat[15] in com:
-        return sum(stat) - stat[15] + sum(combate) - combate[15] + sum(rolls)
-    if stat[15] in nav:
-        return sum(stat) - stat[15] + sum(nave) - nave[15] + sum(rolls)
+        return int(sum(stat) - stat[15] + sum(mobilidade) - mobilidade[15] + sum(rolls))
+    elif stat[15] in ger:
+        return int(sum(stat) - stat[15] + sum(geral) - geral[15] + sum(rolls))
+    elif stat[15] in com:
+        return int(sum(stat) - stat[15] + sum(combate) - combate[15] + sum(rolls))
+    elif stat[15] in nav:
+        return int(sum(stat) - stat[15] + sum(nave) - nave[15] + sum(rolls))
+    else:
+        return int(sum(stat) - stat[15] + sum(rolls))
 
 def initstat(n):
     return array.array('b', [0]*15 + [n])
@@ -564,7 +566,7 @@ def criarinimigo(tipo):
         qtmissel = 2
         v = 1.5
         qthp = 0
-        qtmissel = 0
+        qtmissel = 3
         qtesc = 0
     if len(inimigos) > 10:
         return 0
@@ -572,15 +574,15 @@ def criarinimigo(tipo):
     inimigos[f'i{(n+1)}'] = {
     "tipo" : tipo,
     "hp" : 30 + qthp + float(((sin(rand())) * 6.66)),
-    "mísseis" : rand()%qtmissel + sin(rand()),
+    "mísseis" : int(rand()%qtmissel + sin(rand())),
     "escudo": (10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2)
     }
 
 i1 = {
     "tipo de inimigo": "leve",
     "hp" : int((30 + (sin(rand())) * 6.66)),
-    "velocidade": 6,
-    "mísseis" : rand()%2 + sin(rand()),
+    #"velocidade": 6,
+    "mísseis" : int(rand()%2 + sin(rand())),
     "escudo": 10,
     #"tipo de missel": tipomissel(),
     #"tipo de escudo": tipoescudo(),
@@ -609,6 +611,8 @@ print(armazém)
 print(len(armazém)) 
 
 setfoo('turnosatuais', 0)
+
+print(inimigos["i1"])
 
 #testes de DT
 bonus_cargo = {
@@ -662,9 +666,6 @@ def rolar(teste, cargo):
         return "HARD"
 #print(rolar(comunicaçao, 'engenheiro'))
 
-
-
-
 import curses
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
@@ -709,12 +710,24 @@ def mostrar_status(stdscr, items):
         stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
     stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
 
+
 def mostrar_inimigos(stdscr, items):
-    largura = max(len(text) for text in items) + 2
-    y,x = stdscr.getmaxyx()
-    w = x - 2
-    for i, text in enumerate(items):
-        stdscr.addstr(2+i, w, "| " + text.rjust(largura -2) + " |")
+    largura = max(len(key) for inimigo in items.values() for key in inimigo) + 2
+    y, x = stdscr.getmaxyx()
+    w = x - largura*2
+    j = 1
+    stdscr.addstr(j, w, "┌" + "─" * (largura+((largura)//2)+2) + "┐")
+    stdscr.addstr(j+1, w, "│ " + "INIMIGOS".ljust(largura - 2) + " │".rjust((largura-len("Inimigos")+3)))
+    for nome, inimigo in items.items():
+        stdscr.addstr(2 + j, w, f"| --- {nome} {"-" * ((largura + 2))}|")
+        j += 1
+        for key, value in inimigo.items():
+            stdscr.addstr(2 + j, w, f"| {key.ljust(largura - 2)} : {str(value).rjust((largura-2)//2)} |")
+            j += 1
+    stdscr.addstr(j+2, w, "└" + "─" * (largura+((largura)//2)+2) + "┘")
+def mostrar_inputs(stdscr):
+    stdscr.addstr(y//2, 5, "Q: Ver Tripulação")
+    stdscr.addstr(y//2, 5, "Setas: Mover")
 
 def draw_extras(stdscr):
     mostrar_status(stdscr, status)
