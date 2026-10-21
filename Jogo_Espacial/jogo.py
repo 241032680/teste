@@ -573,9 +573,9 @@ def criarinimigo(tipo):
     n = len(inimigos)
     inimigos[f'i{(n+1)}'] = {
     "tipo" : tipo,
-    "hp" : 30 + qthp + float(((sin(rand())) * 6.66)),
+    "hp" : int(30 + qthp + float(((sin(rand())) * 6.66))),
     "mísseis" : int(rand()%qtmissel + sin(rand())),
-    "escudo": (10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2)
+    "escudo": int((10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2))
     }
 
 i1 = {
@@ -725,13 +725,24 @@ def mostrar_inimigos(stdscr, items):
             stdscr.addstr(2 + j, w, f"| {key.ljust(largura - 2)} : {str(value).rjust((largura-2)//2)} |")
             j += 1
     stdscr.addstr(j+2, w, "└" + "─" * (largura+((largura)//2)+2) + "┘")
-def mostrar_inputs(stdscr):
-    stdscr.addstr(y//2, 5, "Q: Ver Tripulação")
-    stdscr.addstr(y//2, 5, "Setas: Mover")
+
+menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
+
+criarinimigo("leve")
+criarinimigo("pesado")
+criarinimigo("medio")
+criarinimigo("pesado")
+
+def mostrar_inputs(stdscr, items):
+    y, x = stdscr.getmaxyx()
+    largura = max(len(text) for text in items) + 2
+    for i, text in enumerate(menu_inputs):
+        stdscr.addstr((y//3)+i+2, 1, text)
 
 def draw_extras(stdscr):
     mostrar_status(stdscr, status)
     mostrar_inimigos(stdscr, inimigos)
+    mostrar_inputs(stdscr, menu_inputs)
 
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
