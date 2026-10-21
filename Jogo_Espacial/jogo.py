@@ -1,9 +1,20 @@
 import time
 import array
 
+mob = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+ger = [51, 52, 53, 54, 55, 56]
+nav = [22, 23, 24, 25, 26, 27]
+com = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
 
 def getstat(stat):
-    return sum(stat) - stat[15]
+    if stat[15] in mob:
+        return sum(stat) - stat[15] + sum(mobilidade) - mobilidade[15] + sum(rolls)
+    if stat[15] in ger:
+        return sum(stat) - stat[15] + sum(geral) - geral[15] + sum(rolls)
+    if stat[15] in com:
+        return sum(stat) - stat[15] + sum(combate) - combate[15] + sum(rolls)
+    if stat[15] in nav:
+        return sum(stat) - stat[15] + sum(nave) - nave[15] + sum(rolls)
 
 def initstat(n):
     return array.array('b', [0]*15 + [n])
@@ -136,6 +147,10 @@ saude = initstat(53)
 força = initstat(54)
 intimidação = initstat(55)
 abrirtravas = initstat(56)
+mobilidade = initstat(57)
+combate = initstat(58)
+nave = initstat(59)
+geral = initstat(60)
 
 #buffs/debuffs modo: stat[1]
 #buffs/debuffs crio: stat[2]
@@ -236,14 +251,14 @@ def utilbase(crioat, sonarat, radioat, gravat): #utilitários
 
     if crio[0]:
         print("Crio On")
-        rolls[2] = velmax[2] = danoaae[2] = danofront[2] = 0
+        rolls[2],velmax[2],danoaae[2],danofront[2] = 0,0,0,0
     else:
         print("Crio Off")
         rolls[2], velmax[2], danoaae[2], danofront[2] = -1, 3, 4, 4
 
     if sonar[0]:
         print("Sonar On")
-        mira[3] = percepçao[3] = danoaae[3] = danofront[3] = velmax[3] = 0
+        mira[3], percepçao[3], danoaae[3], danofront[3], velmax[3] = 0,0,0,0,0
     else:
         print("Sonar Off")
         mira[3], percepçao[3], danoaae[3], danofront[3], velmax[3] = -2, -1, 3, 1, 1
@@ -260,7 +275,7 @@ def utilbase(crioat, sonarat, radioat, gravat): #utilitários
 
     if grav[0]:
         print("Gravity On")
-        mobilidade[5] = cover[5] = mira[5] = escudo[5] = danoaae[5] = danofront[5] = 0
+        mobilidade[5], cover[5], mira[5], escudo[5], danoaae[5], danofront[5] = 0,0,0,0,0,0
     else:
         print("Gravity Off")
         mobilidade[5], cover[5], mira[5], escudo[5], danoaae[5], danofront[5] = -2, -2, -1, 2, 1, 1
@@ -427,8 +442,8 @@ def consertar(lugar):
         setfoo('escudoefetivot', escudot[0])
     elif lugar == 'comms':
         setfoo('podeusarcomms', True)
-    elif lugar in QUARTOS:
-        _, estado, _ = QUARTOS[lugar]
+    elif lugar in quartos:
+        _, estado, _ = quartos[lugar]
         setfoo(estado, False) #corrigido: usa o mesmo estado lido por danos()
         setfoo('numquartos', max(f['numquartos'] - 1, 0))
         if f['numquartos'] <= 0:
@@ -445,7 +460,7 @@ def consertar(lugar):
 #end of round
 
 def inventorycheck(): #corrigido: remove itens aleatórios ao exceder a capacidade
-    for inventario, capacidade in LIMITES_INVENTARIO:
+    for inventario, capacidade in capacidade_inventarios:
         while len(inventario) > capacidade:
             inventario.pop(tuple(inventario)[rand() % len(inventario)]) #corrigido: remove por uma chave existente
 
@@ -503,7 +518,7 @@ def danos():
             inventario.pop(tuple(inventario)[rand() % len(inventario)]) #corrigido: escolhe uma chave existente
 
     if f['danoquartos']:
-        for indice, estado, inventario in QUARTOS.values():
+        for indice, estado, inventario in quartos.values():
             if f[estado] or f['quarto'] == indice:
                 if inventario:
                     inventario.pop(tuple(inventario)[rand() % len(inventario)]) #corrigido: escolhe uma chave existente
@@ -535,19 +550,37 @@ def eor(): #executa atualizações no fechamento da rodada
 #inimigo
 
 def criarinimigo(tipo):
-  if len(inimigos) > 10:
-    return 0
-  n = len(inimigos)
-  inimigos[f'i{(n+1)}'] = {
-  "tipo" : tipo,
-  "hp" : 30 + float(((sin(rand())) * 6.66)),
-  }
+    if tipo == "medio":
+        qtmissel = 3
+        qthp = 30
+        qtesc = 5
+        v = 4.56
+    elif tipo == "pesado":
+        qtmissel = 4
+        qtesc = 10
+        qthp = 60
+        v = 6.66
+    else:
+        qtmissel = 2
+        v = 1.5
+        qthp = 0
+        qtmissel = 0
+        qtesc = 0
+    if len(inimigos) > 10:
+        return 0
+    n = len(inimigos)
+    inimigos[f'i{(n+1)}'] = {
+    "tipo" : tipo,
+    "hp" : 30 + qthp + float(((sin(rand())) * 6.66)),
+    "mísseis" : rand()%qtmissel + sin(rand()),
+    "escudo": (10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2)
+    }
 
 i1 = {
     "tipo de inimigo": "leve",
     "hp" : int((30 + (sin(rand())) * 6.66)),
     "velocidade": 6,
-    "mísseis" : rand()%2,
+    "mísseis" : rand()%2 + sin(rand()),
     "escudo": 10,
     #"tipo de missel": tipomissel(),
     #"tipo de escudo": tipoescudo(),
@@ -569,60 +602,6 @@ inimigos = {
   "i2" : i2,
   "i3" : i3
 } 
-
-def tipodano():
-    tpd = rand()%6
-    match tpd:
-        case 0:
-            return "íon" # +dano escudo -dano casco
-        case 1|2: 
-            return "plasma" #-dano escudo +dano casco
-        case 3|4|5: 
-            return "proton" #sem modificadores
-
-def tipoescudo():
-    scd = rand()%8
-    match scd:
-        case 0:
-            return "Deflector" #padrao
-        case 1: 
-            return "Conversion" #quando o escudo é desativado, desliga todas as armas mas cria uma barreira forte
-        case 2: 
-            return "Fortificado" #mais forte, regenera mais devagar
-        case 3:
-            return "Nimble" #mais fraco, regenera mais rapido
-        case 4:
-            return "Overloaded" #muito mais forte, regenera lento, não regenera se completamente derrubado
-        case 5:
-            return "Ray" #leva menos dano de torretas e mais dano de torpedos
-        case 6:
-            return "Resonant" #Mais fraco, aumenta o dano das proprias armas
-        case 7:
-            return "Scrambler" #Dificulta lock in misseis e torretas quando 100%, demora mais p/ começar a regenerar
-
-def tipomissel():
-    msl = rand()%4
-    match msl:
-        case 0: #misseis
-            if i[['tipo']]=="pesado":
-                msl1=rand()%4
-            else:
-                msl1=rand()%3
-            match msl1:
-                case 0:
-                    return "Concussion"
-                case 1:
-                    return "Ion"
-                case 2:
-                    return "Multi-Lock"
-                case 3:
-                    return "Goliath"
-        case 1: #torpedos
-            pass
-        case 2: #bombas
-            pass
-        case 3: #foguetes
-            pass
 
 for x in range(1, 19):
     additem(armazém, str(x), rand()%90)
@@ -730,8 +709,16 @@ def mostrar_status(stdscr, items):
         stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
     stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
 
+def mostrar_inimigos(stdscr, items):
+    largura = max(len(text) for text in items) + 2
+    y,x = stdscr.getmaxyx()
+    w = x - 2
+    for i, text in enumerate(items):
+        stdscr.addstr(2+i, w, "| " + text.rjust(largura -2) + " |")
+
 def draw_extras(stdscr):
     mostrar_status(stdscr, status)
+    mostrar_inimigos(stdscr, inimigos)
 
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
