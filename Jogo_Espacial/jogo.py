@@ -666,6 +666,24 @@ def rolar(teste, cargo):
         return "HARD"
 #print(rolar(comunicaçao, 'engenheiro'))
 
+map = []
+def criar_mapa():
+    for x in range(0, 20):
+        map.append(['0']*20 + [x+1])
+    return map
+
+def origin():
+    map[19][10] = "X"
+
+def enemy_spawn():
+    map[(rand()%14)+1][(rand()%18)+1] = 'I'
+
+criar_mapa()
+origin()
+
+for x in range (0, min(2, (rand()%7)+1)):
+    enemy_spawn()
+
 import curses
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
@@ -738,12 +756,18 @@ def mostrar_inputs(stdscr, items):
     largura = max(len(text) for text in items) + 2
     for i, text in enumerate(menu_inputs):
         stdscr.addstr((y//3)+i+2, 1, text)
+    stdscr.addstr(y//2, 1, f'y: {y} x: {x}')
+
+def mostrar_mapa(stdscr, items):
+    y, x = stdscr.getmaxyx()
+    for x in range (0, len(items)):
+        stdscr.addstr(1, x//2, (items[x]))
 
 def draw_extras(stdscr):
     mostrar_status(stdscr, status)
     mostrar_inimigos(stdscr, inimigos)
     mostrar_inputs(stdscr, menu_inputs)
-
+    #mostrar_mapa(stdscr, map)
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
@@ -959,3 +983,4 @@ def atirador_aae(ação):
 #criar cli bonitinha
 #tabs 1 2 3 4 5 com ações de cada player, quando todas escolhidas, turno dos inimigos
 #calculo e ajustes, repete
+
