@@ -56,7 +56,6 @@ bonus_cargo = {
 #print(bonus_cargo)
 dts= [(10, 12, 14), (11, 14, 18), (12, 16, 21), (13, 18, 24), (18, 26, 36)]
 
-
 def rolar(teste, cargo):
     print(teste)
     if teste[15] in bonus_cargo[cargo]:

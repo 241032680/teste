@@ -1,10 +1,11 @@
 import time
 import array
 
-mob = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
-ger = [51, 52, 53, 54, 55, 56]
-nav = [22, 23, 24, 25, 26, 27]
-com = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+#categorias de stats
+mob = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50] #mobilidade
+ger = [51, 52, 53, 54, 55, 56] #geral
+nav = [22, 23, 24, 25, 26, 27] #navegação
+com = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39] #comunicação
 
 def getstat(stat):
     if stat[15] in mob:
@@ -19,7 +20,7 @@ def getstat(stat):
         return int(sum(stat) - stat[15] + sum(rolls))
 
 def initstat(n):
-    return array.array('b', [0]*15 + [n])
+    return array.array('b', [0]*15 + [n]) #o ultimo valor do array é o identificador
 
 def timer(frames):
     while frames:
@@ -79,9 +80,9 @@ def avg(list):
 #stats
 #começando a separar por causa do display/GUI, talvez desnecessário com método...
 f = {}
+#só sobrou o f agora
 
-
-def setfoo(foo, valor):
+def setfoo(foo, valor): #seta as flags do jogo
     f[foo] = valor
 
 #stats nave
@@ -666,23 +667,13 @@ def rolar(teste, cargo):
         return "HARD"
 #print(rolar(comunicaçao, 'engenheiro'))
 
-map = []
-def criar_mapa():
-    for x in range(0, 20):
-        map.append(['0']*20 + [x+1])
-    return map
+map = ["X"] + ["0"]*20
 
-def origin():
-    map[19][10] = "X"
+def avançar_nave():
+    x = map.index("X")
+    map[x] = 0
+    map[x+1] = " X "
 
-def enemy_spawn():
-    map[(rand()%14)+1][(rand()%18)+1] = 'I'
-
-criar_mapa()
-origin()
-
-for x in range (0, min(2, (rand()%7)+1)):
-    enemy_spawn()
 
 import curses
 from dataclasses import dataclass, field
@@ -760,14 +751,16 @@ def mostrar_inputs(stdscr, items):
 
 def mostrar_mapa(stdscr, items):
     y, x = stdscr.getmaxyx()
-    for x in range (0, len(items)):
-        stdscr.addstr(1, x//2, (items[x]))
+    largura = len(items)
+    for i, text in enumerate(items):
+        stdscr.addstr(1, x//2-(2*largura)+(2*i), "-" + str(text) + "-")
 
 def draw_extras(stdscr):
     mostrar_status(stdscr, status)
     mostrar_inimigos(stdscr, inimigos)
     mostrar_inputs(stdscr, menu_inputs)
-    #mostrar_mapa(stdscr, map)
+    mostrar_mapa(stdscr, map)
+    
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()

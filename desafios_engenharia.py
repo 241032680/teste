@@ -7,7 +7,6 @@ while ex not in ("A", "B", "C", "D"):
     ex = input("Digite o exercício que deseja executar (A, B, C ou D): ").upper()
 
 #A
-
 if ex == "A":
     valido = 0
     while valido == 0:

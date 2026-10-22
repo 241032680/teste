@@ -8,6 +8,7 @@ def tipodano():
         case 3|4|5: 
             return "proton" #sem modificadores
 
+
 def tipoescudo():
     scd = rand()%8
     match scd:

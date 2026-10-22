@@ -7,7 +7,6 @@ def testar_e():
         meio = sum(valores) - maior - menor
         print(f"Teste E ({limite}): maior = {maior}, meio = {meio}")
 
-
 def testar_f():
     for limite in (0, 50, 150, 300):
         if limite == 0:

@@ -1,1 +1,1 @@
-print("\033[92mX ")
+print("Hello world!")
