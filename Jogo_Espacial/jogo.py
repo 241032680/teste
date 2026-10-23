@@ -555,26 +555,30 @@ def eor(): #executa atualizações no fechamento da rodada
 def criarinimigo(tipo):
     if tipo == "medio":
         qtmissel = 3
-        qthp = 30
+        qthp = 40
         qtesc = 5
         v = 4.56
+        s = 5
     elif tipo == "pesado":
         qtmissel = 4
         qtesc = 10
-        qthp = 60
+        qthp = 80
         v = 6.66
+        s = 4
     else:
         qtmissel = 2
         v = 1.5
         qthp = 0
         qtmissel = 3
         qtesc = 0
+        s = 6
     if len(inimigos) > 10:
         return 0
     n = len(inimigos)
     inimigos[f'i{(n+1)}'] = {
     "tipo" : tipo,
     "hp" : int(30 + qthp + float(((sin(rand())) * 6.66))),
+    "velocidade": int(s),
     "mísseis" : int(rand()%qtmissel + sin(rand())),
     "escudo": int((10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2))
     }
@@ -582,38 +586,34 @@ def criarinimigo(tipo):
 i1 = {
     "tipo de inimigo": "leve",
     "hp" : int((30 + (sin(rand())) * 6.66)),
-    #"velocidade": 6,
-    "mísseis" : int(rand()%2 + sin(rand())),
-    "escudo": 10,
+    "velocidade": 6,
+    "mísseis" : int(rand()%3 + sin(rand())),
+    "escudo": int((10 + (sin(rand()) * 1.5)) * ((sin(rand()) + 1.5)//2.2)),
     #"tipo de missel": tipomissel(),
     #"tipo de escudo": tipoescudo(),
     #"tipo de dano": tipodano(),
   }
 
-i2 = {
-  "tipo" : "medio",
-  "hp" : 80
-}
+i2 = {"tipo" : "medio", 
+"hp" : int(30 + 40 + float(((sin(rand())) * 6.66))),
+"escudo": int((10 + 5 + (sin(rand()) * 4.56)) * ((sin(rand()) + 1.5)//2.2))}
 
-i3 = {
-  "tipo" : "pesado",
-  "hp" : 120
-}
+i3 = {"tipo" : "pesado",
+"hp" : int(30 + 80 + float(((sin(rand())) * 6.66))),
+"escudo": int((10 + 10 + (sin(rand()) * 6.66)) * ((sin(rand()) + 1.5)//2.2))}
 
-inimigos = {
-  "i1" : i1,
-  "i2" : i2,
-  "i3" : i3
-} 
+inimigos = {"i1" : i1,
+"i2" : i2,
+"i3" : i3} 
 
 for x in range(1, 19):
     additem(armazém, str(x), rand()%90)
-print(armazém)
-print(len(armazém)) 
+#print(armazém)
+#print(len(armazém)) 
 
 setfoo('turnosatuais', 0)
 
-print(inimigos["i1"])
+#print(inimigos["i1"])
 
 #testes de DT
 bonus_cargo = {
@@ -718,29 +718,53 @@ def mostrar_status(stdscr, items):
     for i, text in enumerate(items):
         stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
     stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
-
-
-def mostrar_inimigos(stdscr, items):
-    largura = max(len(key) for inimigo in items.values() for key in inimigo) + 2
-    y, x = stdscr.getmaxyx()
-    w = x - largura*2
-    j = 1
-    stdscr.addstr(j, w, "┌" + "─" * (largura+((largura)//2)+2) + "┐")
-    stdscr.addstr(j+1, w, "│ " + "INIMIGOS".ljust(largura - 2) + " │".rjust((largura-len("Inimigos")+3)))
-    for nome, inimigo in items.items():
-        stdscr.addstr(2 + j, w, f"| --- {nome} {"-" * ((largura + 2))}|")
-        j += 1
-        for key, value in inimigo.items():
-            stdscr.addstr(2 + j, w, f"| {key.ljust(largura - 2)} : {str(value).rjust((largura-2)//2)} |")
-            j += 1
-    stdscr.addstr(j+2, w, "└" + "─" * (largura+((largura)//2)+2) + "┘")
-
-menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
+    stdscr.refresh()
 
 criarinimigo("leve")
 criarinimigo("pesado")
 criarinimigo("medio")
 criarinimigo("pesado")
+
+
+def mostrar_inimigos(stdscr, items):
+    duas_colunas = bool(len(items)>6)
+    largura = max(len(key) for inimigo in items.values() for key in inimigo) + 2
+    y, x = stdscr.getmaxyx()
+    w = x +4 - largura*2
+    j,k = 1,1
+    colunaum, colunadois = inimigos.copy(), inimigos.copy()
+    while len(colunaum) > 6:
+        colunaum.popitem()
+    for I in range(1, 7):
+        try:
+            colunadois.pop(f"i{I}")
+        except:
+            pass
+    stdscr.addstr(j, w - (largura*duas_colunas*2), "┌" + "─" * (largura+((largura)//2)+2) + "┐")
+    stdscr.addstr(j+1, w - (largura*duas_colunas*2), "│ ".ljust((largura-2)//2) + "INIMIGOS".center(largura-2) + " │".rjust((largura-2)//2))
+    if duas_colunas:
+        stdscr.addstr(j, w-2, "┌" + "─" * (largura+((largura)//2)+2) + "┐")
+        stdscr.addstr(j+1, w-2, "│ ".ljust((largura-2)//2) + "INIMIGOS".center((largura-2)) + " │".rjust((largura-2)//2))
+
+    for nome, inimigo in colunaum.items():
+        stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f"| --- {nome} {"-" * ((largura + 2))}|")
+        j += 1
+        for key, value in inimigo.items():
+            if j < 33:
+                stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
+                j += 1
+    for nome, Inimigo in colunadois.items():
+        stdscr.addstr(2 + k, w-2, f"| --- {nome} {"-" * ((largura + 2))}|")
+        k += 1
+        for key, value in Inimigo.items():
+            stdscr.addstr(2 + k, w-2, f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
+            k +=1
+
+    stdscr.addstr(j+2, w - (largura*duas_colunas*2), "└" + "─" * (largura+((largura)//2)+2) + "┘")
+    if duas_colunas: 
+        stdscr.addstr(k+2, w-2, "└" + "─" * (largura+((largura)//2)+2) + "┘")
+
+menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
 
 def mostrar_inputs(stdscr, items):
     y, x = stdscr.getmaxyx()
@@ -748,6 +772,7 @@ def mostrar_inputs(stdscr, items):
     for i, text in enumerate(menu_inputs):
         stdscr.addstr((y//3)+i+2, 1, text)
     stdscr.addstr(y//2, 1, f'y: {y} x: {x}')
+    stdscr.refresh()
 
 def mostrar_mapa(stdscr, items):
     y, x = stdscr.getmaxyx()
@@ -760,7 +785,7 @@ def draw_extras(stdscr):
     mostrar_inimigos(stdscr, inimigos)
     mostrar_inputs(stdscr, menu_inputs)
     mostrar_mapa(stdscr, map)
-    
+
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
@@ -786,7 +811,7 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.refresh()
 
 def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
-    stdscr.clear()
+    stdscr.erase()
     h, w = stdscr.getmaxyx()
     if draw_extras:
         draw_extras(stdscr)
@@ -803,7 +828,7 @@ def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
 
     stdscr.refresh()
 
-def run_menu(stdscr, items, layout="vertical", draw_extras=None):
+def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
     """
     layout="horizontal" → LEFT/RIGHT keys, box-buttons at the bottom.
     layout="vertical"   → UP/DOWN keys, centered list (default for submenus).
@@ -859,6 +884,16 @@ def escape_seq():
 def force_confirm():
     setfoo('turnosatuais', 3)
 
+def ajustar_util(stdscr, alvo):
+    if alvo not in (crio, sonar, radio, grav):
+        return 0
+    stdscr.erase(stdscr)
+    (not(bool(crio[0])), sonar[0], radio[0], grav[0])
+    (crio[0], not(bool(sonar[0])), radio[0], grav[0])
+    (crio[0], sonar[0], not(bool(radio[0])), grav[0])
+    (crio[0], sonar[0], radio[0], not(bool(grav[0])))
+
+
 # ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
 MENU = [
     opt("Copiloto", submenu=[
@@ -908,7 +943,7 @@ MENU = [
     opt("Atirador",submenu=[
         opt("Atirar em um Inimigo",   action=lambda s: None),
         opt("Abrir Painel de Utilitários", submenu=[
-            opt("Ajustar Gravidade", action=lambda s: None),
+            #opt("Ajustar Gravidade", action = ajustar_util(foobar, grav)),
             opt("Ajustar Sonar",   action=lambda s: None),
             opt("Ajustar Rádio",   action=lambda s: None),
             opt("Ajustar Criogenia", action=lambda s: None),
