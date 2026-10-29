@@ -1,1 +1,580 @@
-a
+# Análise arquitetural: simplificação das funções que modificam o estado
+
+Com as clarificações, considero que a arquitetura pode ficar consideravelmente mais simples do que a proposta anterior. Em especial, manteria o `getstat()` e os arrays de 16 posições, incluindo os 15 slots de valores e modificadores. Esse sistema tem uma vantagem importante: cada fonte de modificação possui um espaço reservado e pode substituir seu próprio valor sem precisar conhecer as alterações dos outros sistemas.
+
+O problema não está nessa representação. Está na maneira como algumas funções a utilizam.
+
+Após examinar as chamadas entre `flip()`, `setdirect()`, `setmodo()`, `utilbase()`, `hitnave()`, `consertar()`, `danos()`, `genescudo()` e `atualizaroverclock()`, identifico três causas principais do acoplamento:
+
+1. Funções que modificam sistemas diferentes: `setmodo()` também redistribui os escudos; `flip()` chama `setmodo()`; `hitnave()` desliga equipamentos por meio de `utilbase()`.
+2. Estados redundantes: uma mesma condição é representada por arrays, flags e contadores que precisam permanecer sincronizados manualmente.
+3. Modificadores incrementais: embora os slots sejam independentes, os danos continuam fazendo operações como `-=`, que precisam ser desfeitas com `+=` durante o conserto.
+
+A terceira causa é particularmente importante. Ela explica por que o sistema de danos está se tornando difícil de manter, apesar da existência dos slots reservados.
+
+## 1. A regra arquitetural que adotaria
+
+Cada sistema deve ser responsável somente pelos dados que lhe pertencem.
+
+| Slot         | Responsabilidade            | Quem pode modificá-lo                       |
+| ------------ | --------------------------- | ------------------------------------------- |
+| `[0]`        | Valor base                  | Inicialização e alterações permanentes      |
+| `[1]`        | Distribuição de energia     | `setmodo()`                                 |
+| `[2]`        | Criogenia                   | Rotina dos efeitos da criogenia             |
+| `[3]`        | Sonar                       | Rotina dos efeitos do sonar                 |
+| `[4]`        | Rádio                       | Rotina dos efeitos do rádio                 |
+| `[5]`        | Gravidade                   | Rotina dos efeitos da gravidade             |
+| `[6]`        | Danos na nave               | Rotina de atualização dos danos             |
+| `[7]`        | Modificadores do personagem | Sistema de tripulação                       |
+| `[8]`        | Bônus de cargo              | Inicialização do personagem                 |
+| `[9]`–`[14]` | Reservados                  | Sistemas futuros, conforme necessidade      |
+| `[15]`       | Identificador               | Inicialização, sem modificações posteriores |
+
+A distinção fundamental é entre alterar o estado de um sistema e atualizar os modificadores produzidos por esse estado.
+
+Por exemplo:
+
+- O jogador desliga a gravidade: altera o estado da gravidade.
+- A rotina de gravidade escreve os valores correspondentes no slot `[5]`.
+- A rolagem futura utiliza `getstat()` e já encontra a soma correta.
+
+Não há necessidade de alterar diretamente as habilidades, registrar compensações ou chamar funções de outros equipamentos.
+
+Da mesma forma, um dano ao propulsor deverá atualizar exclusivamente o estado dos propulsores. O valor de `velmax[6]` será calculado a partir desse estado, e não diminuído repetidamente a cada disparo.
+
+Essa organização preserva o desenho original dos arrays e evita a necessidade de uma arquitetura de eventos, observadores ou objetos interdependentes.
+
+### Uma distinção indispensável: atributos versus estados
+
+Existe, entretanto, um problema concreto com o uso atual de `getstat()`.
+
+A função acrescenta `sum(rolls)` ao resultado. Como `rolls[0]` começa em 1, ela não serve para consultar diretamente condições booleanas.
+
+Isso afeta, por exemplo:
+
+- `getstat(overclock)`: pode indicar um valor positivo mesmo quando `overclock[0]` está desligado.
+- `getstat(direct)`: altera o identificador da direção quando se pretendia apenas consultá-lo.
+- `getstat(modoativo)`: transforma o modo 1 em outro valor.
+- `getstat(crio)`: não é uma verificação adequada do estado ligado/desligado.
+
+O erro chega a `flip()`: como `getstat(overclock)` já retorna um valor positivo quando o overclock está inicialmente desligado, a expressão utilizada para alterná-lo não consegue ativá-lo corretamente.
+
+Isso também afeta os valores iniciais dos escudos: `setmodo(1)` chama `setdirect(getstat(direct))`, interpretando a direção padrão como outra direção, enquanto a capacidade é calculada com um overclock aparentemente ativo.
+
+Não é necessário modificar `getstat()` para corrigir isso. Basta estabelecer que ele será usado para atributos e testes, enquanto equipamentos, modos, contadores e flags serão consultados diretamente em suas posições de estado, ou por um cálculo específico quando representarem valores derivados.
+
+Essa separação precisa ser respeitada em todas as implementações futuras.
+
+## 2. O emaranhado de chamadas atual
+
+O principal problema está concentrado nestas relações:
+
+Fluxo atual — chamadas e efeitos indiretos
+
+flip()\
+&#x20; └─ setmodo()\
+&#x20;      └─ setdirect()\
+\
+ajustar_util()\
+&#x20; └─ utilbase() [todos os equipamentos]\
+\
+hitnave()\
+&#x20; ├─ utilbase() [todos os equipamentos]\
+&#x20; ├─ modifica flags\
+&#x20; └─ modifica diretamente os slots [6]\
+\
+consertar()\
+&#x20; ├─ modifica flags\
+&#x20; └─ tenta inverter os slots [6]\
+\
+eor()\
+&#x20; ├─ inventorycheck()\
+&#x20; ├─ genescudo()\
+&#x20; ├─ danos() [modifica slots e flags]\
+&#x20; └─ atualizaroverclock()
+
+O problema desse fluxo não é simplesmente haver funções chamando outras funções. Isso é normal. O problema é que cada chamada pode modificar dados cuja responsabilidade está em outro lugar.
+
+Eu substituiria esse funcionamento por um modelo com alterações de estado seguidas de uma única sincronização.
+
+Fluxo recomendado
+
+Comando ou evento
+
+Alterar energia, receber dano, consertar, desligar equipamento...
+
+Modificar o estado primário
+
+Ex.: gravidade desligada, propulsor danificado, modo 3 selecionado
+
+Sincronizar os valores derivados
+
+[1] Energia
+
+[2–5] Equipamentos
+
+[6] Danos
+
+Capacidades e restrições
+
+Estado pronto para consultas e display
+
+Essa sincronização não precisa ser um conjunto de pequenas funções que chamam umas às outras. Pode ser uma função procedural relativamente longa, com seções comentadas para cada sistema.
+
+Ela também não precisa acontecer constantemente. Basta executá-la na inicialização, após uma ação que modifica algum desses sistemas e após os eventos relevantes do fim da rodada.
+
+Considerando o número reduzido de atributos, recalcular todos os modificadores não teria custo significativo.
+
+Há duas opções de implementação:
+
+| Abordagem             | Funcionamento                                                                                                                                       | Avaliação                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Alteração mínima      | Cada função continua escrevendo no próprio slot, mas deixa de chamar sistemas alheios. Uma rotina comum atualiza apenas as capacidades dependentes. | Mais rápida de adaptar           |
+| Sincronização central | As funções modificam apenas estados primários; uma rotina reescreve os slots com base nesses estados.                                               | Minha preferência para o projeto |
+
+A segunda oferece maior previsibilidade, sobretudo para danos e consertos.
+
+## 3. Revisão individual das funções
+
+### `setmodo()` — preservar a lógica, remover responsabilidades secundárias
+
+A implementação atual já possui uma boa característica: a tabela `MODOS` centraliza os valores correspondentes a cada distribuição energética.
+
+A atribuição dos sete valores em uma única operação também é adequada. Não há motivo para transformá-la em sete funções diferentes.
+
+O que eu mudaria:
+
+- Manter a tabela `MODOS`.
+- Manter a representação numérica do modo selecionado.
+- Retirar a chamada a `setdirect()`.
+- Eliminar a consulta a `getstat(modoativo)` para obter o modo.
+- Não fazer a função alterar cargas atuais de escudo.
+
+Se optarmos pela sincronização central, `setmodo()` terá somente a responsabilidade de selecionar o modo. A rotina de sincronização interpretará essa escolha e preencherá os slots `[1]`.
+
+Um detalhe: os valores de `escudo[1]` são valores absolutos de geração, enquanto os demais campos da tabela representam modificadores. Isso não é um problema, pois `escudo[0]` começa em zero. Apenas precisa permanecer documentado.
+
+Veredito: praticamente toda a lógica existente é aproveitável. A chamada a `setdirect()` é a principal coisa a eliminar.
+
+### `setdirect()` — separar a escolha do cálculo
+
+Essa função atualmente acumula três responsabilidades:
+
+1. Determinar o valor total do escudo.
+2. Distribuir esse valor entre frente e traseira.
+3. Modificar o estado da direção selecionada.
+
+Ela também depende implicitamente do modo energético e do overclock.
+
+A proposta é separar a escolha da direção do cálculo das capacidades.
+
+A seleção seria uma operação simples, alterando `direct[0]`. O cálculo posterior consideraria o valor de geração dos escudos, o overclock e a direção escolhida.
+
+A parte matemática que transforma esses três valores nas capacidades frontal e traseira é uma boa candidata a função pura: recebe os números e devolve os dois resultados, sem acessar ou alterar globais.
+
+É uma extração justificável, pois reúne uma operação independente, com regras próprias, reutilizável e facilmente testável.
+
+O cálculo atual também precisa distinguir `escudof[0]` e `escudot[0]`, que funcionam como capacidades, de `f['escudoefetivof']` e `f['escudoefetivot']`, que representam a carga atual.
+
+Ao mudar o modo de energia, não se deve restaurar inadvertidamente um escudo que já foi destruído.
+
+Veredito: preservar a representação dos escudos; separar seleção, capacidade e carga efetiva.
+
+### `flip()` — eliminar a cadeia desnecessária
+
+A função atual alterna o overclock, atualiza `motorquente` e chama `setmodo()`, que por sua vez chama `setdirect()`.
+
+É justamente o tipo de sequência que eu eliminaria.
+
+O overclock já tem seu próprio estado em `overclock[0]`. Portanto, não há necessidade de manter `motorquente` como segunda representação da mesma informação.
+
+A operação pode limitar-se a alternar o estado do overclock, desde que o gerador esteja funcional. A sincronização comum atualizará a capacidade dos escudos.
+
+O risco progressivo deve permanecer como um contador separado, porque é um dado diferente: indica quantas rodadas de risco se acumularam, não se o equipamento está ligado.
+
+A falha do gerador, agora esclarecida, deve produzir o mesmo estado de dano que um disparo contra o gerador de escudos. Isso elimina a necessidade de implementar dois comportamentos paralelos para a mesma avaria.
+
+Veredito: `flip()` pode tornar-se uma das funções mais simples do programa.
+
+### `utilbase()` — a principal candidata à reescrita
+
+Essa função concentra uma parte importante do acoplamento.
+
+Atualmente, recebe quatro estados de equipamentos, grava os quatro, recalcula seus modificadores e imprime quatro mensagens.
+
+Isso acontece mesmo quando apenas um equipamento foi alterado.
+
+Por exemplo, ao desligar a gravidade, `ajustar_util()` precisa reenviar os valores da criogenia, do sonar e do rádio para `utilbase()`.
+
+O resultado é um contrato desnecessariamente amplo.
+
+Minha proposta seria:
+
+- `ajustar_util()` recebe o equipamento a ser alterado.
+- Valida se a alteração é permitida.
+- Modifica somente o estado solicitado.
+- A rotina comum atualiza os modificadores dos equipamentos.
+
+A lógica atualmente presente em `utilbase()` não precisa necessariamente virar quatro funções. Eu manteria quatro seções consecutivas, com comentários:
+
+Criogenia: escreve apenas os efeitos do slot `[2]`.
+
+Sonar: escreve apenas os efeitos do slot `[3]`.
+
+Rádio: escreve apenas os efeitos do slot `[4]`.
+
+Gravidade: escreve apenas os efeitos do slot `[5]`.
+
+Isso é procedural, direto e relativamente fácil de depurar.
+
+Duas correções são especialmente importantes.
+
+A primeira é que desligar o sonar atualmente define `podeusartorpedo` como verdadeiro, embora o documento estabeleça o contrário. A segunda é que desligar o rádio bloqueia comunicações, mas religá-lo não restaura necessariamente a possibilidade de utilizá-las.
+
+Essas condições são melhores como propriedades derivadas dos estados dos equipamentos, e não como flags que precisam ser atualizadas manualmente em vários lugares.
+
+Por exemplo, a possibilidade de disparar torpedos deve depender do sonar funcional, da arma funcional e das demais condições necessárias. O programa pode consultar essas condições quando a ação for solicitada.
+
+Também há uma pequena divergência numérica: o código utiliza `cover[5] = -2` ao desligar a gravidade, enquanto a tabela da nave especifica `-1`.
+
+Veredito: manter o conteúdo matemático de `utilbase()`, mas retirar dela a responsabilidade de alterar quatro equipamentos simultaneamente, imprimir mensagens e controlar permissões de outros sistemas.
+
+## 4. Danos e consertos: a mudança mais importante
+
+Aqui está a principal proposta de simplificação.
+
+Atualmente, o funcionamento é aproximadamente este:
+
+Dano recebido: diminuir um valor em determinado slot.
+
+Dano persistente: diminuir novamente o valor, quando aplicável.
+
+Conserto: descobrir quanto foi diminuído e somar a quantidade inversa.
+
+Esse procedimento funciona em situações simples, mas se torna vulnerável quando existem múltiplos danos, intensidades diferentes e reparos parciais.
+
+A solução é parar de pensar no conserto como uma operação matemática inversa.
+
+O conserto deve modificar o estado do componente danificado. A penalidade é então recalculada a partir dos danos que continuam existentes.
+
+### 4.1. Exemplo com propulsores
+
+Considere três propulsores danificados, cada um reduzindo a velocidade máxima em um ponto.
+
+Comparação entre os dois modelos
+
+Modelo atual
+
+Dano 1: subtrai 1
+
+Dano 2: subtrai 1
+
+Dano 3: subtrai 1
+
+Conserto: soma 1
+
+Precisa preservar a equivalência entre todas as operações.
+
+Modelo recomendado
+
+Propulsores danificados: 3
+
+`velmax[6]`: -3
+
+Conserto: restam 2
+
+`velmax[6]`: -2
+
+Os valores da ilustração são simplificados. O mesmo princípio funciona com danos de gravidades diferentes.
+
+A consequência é importante: o slot `[6]` deixa de guardar o histórico das operações e passa a guardar apenas o resultado dos danos existentes.
+
+Não será preciso lembrar se uma penalidade já foi aplicada duas vezes, se um reparo a compensou ou se um contador foi atualizado antes da alteração.
+
+### 4.2. Duas maneiras de armazenar os danos
+
+Alternativa A — contadores e flags
+
+Para sistemas simples, continuaria usando estruturas próximas das atuais: quantidade de propulsores danificados, quantidade de asas danificadas, intensidade de determinadas avarias e flags de sistemas quebrados.
+
+A penalidade seria derivada desses valores sempre que algum deles mudasse.
+
+Essa é a alternativa com a menor quantidade de alterações estruturais.
+
+Alternativa B — registros individuais de dano
+
+Quando cada dano puder ocorrer em uma localização específica e exigir deslocamento do engenheiro, considero mais adequada uma coleção de registros.
+
+Cada registro conteria apenas o necessário: componente afetado, localização, intensidade, penalidade e eventual prazo de agravamento.
+
+Por exemplo, dois propulsores danificados poderiam existir como dois registros distintos. Reparar um removeria somente aquele registro. A penalidade agregada seria a soma dos danos que permaneceram.
+
+Isso não exige uma hierarquia de classes. Uma coleção de registros simples é suficiente.
+
+Minha escolha seria começar pela alternativa A nos sistemas que já funcionam com contadores e utilizar a B nos componentes que precisam de localização e reparação individual.
+
+As duas podem alimentar a mesma rotina que calcula o slot `[6]`.
+
+### 4.3. `hitnave()` — resolução de ataque e registro de avaria
+
+A função atual mistura absorção de dano, redução de HP, sorteio de subsistema, alteração de equipamentos, modificação de slots e mensagens.
+
+Ela também possui um problema objetivo em relação à regra esclarecida: o sorteio de dano em subsistema ocorre mesmo quando o escudo absorve o disparo.
+
+A correção deve seguir uma ordem fixa:
+
+1. Determinar dano e direção.
+2. Verificar o escudo correspondente.
+3. Aplicar dano ao escudo ou ao casco.
+4. Se o casco não recebeu dano, encerrar a resolução do ataque.
+5. Se o casco recebeu dano, sortear e registrar a avaria.
+6. Registrar o resultado para apresentação ao jogador.
+
+Não é necessário dividir tudo isso em seis funções.
+
+Eu manteria `hitnave()` como uma função procedural com essas seções bem delimitadas. Uma função separada para registrar avarias pode ser justificável porque o mesmo tipo de dano será utilizado pelo overclock e, potencialmente, por outros eventos.
+
+O importante é que `hitnave()` não altere diretamente `velmax[6]`, `pilotagem[6]` ou qualquer outro slot de modificadores.
+
+Ela registra o dano no componente. A sincronização posterior calcula seus efeitos.
+
+Também eliminaria a recursão usada para sortear a intensidade aleatória. A intensidade pode ser determinada no início da própria execução, sem chamar `hitnave()` novamente.
+
+O parâmetro de direção do disparo também deveria ser recebido explicitamente, em vez de depender de `f['direçãoinimigo']`, que pode conter um valor deixado por outro ataque.
+
+### 4.4. `consertar()` — retirar a matemática inversa
+
+A função atual é difícil de manter porque cada caso precisa conhecer a maneira exata como o dano original foi calculado.
+
+O exemplo de `consertar('grav')` é representativo: ela consulta `rodssemgrav` para tentar reconstruir o montante que precisa devolver a `mobilidade[6]` e `cover[6]`.
+
+Com a nova organização, a função poderia ter apenas três responsabilidades:
+
+1. Identificar o componente.
+2. Verificar e aplicar o resultado do reparo.
+3. Atualizar ou remover o registro de avaria.
+
+Os modificadores seriam refeitos posteriormente.
+
+Isso é especialmente útil para a criogenia, cujo código atual soma `hitcrio` a `rolls[6]` e depois reduz o contador em uma unidade. Com múltiplos danos, essa relação pode produzir uma compensação maior do que o dano efetivamente reparado.
+
+A intensidade e a quantidade de avarias precisam permanecer como dados persistentes; os modificadores são derivados.
+
+### 4.5. `danos()` — efeitos por rodada, não aplicação inicial
+
+A rotina atual `danos()` desempenha várias funções diferentes:
+
+- Acumula penalidades de equipamentos.
+- Controla desmaio.
+- Atualiza contadores.
+- Consolida novos danos de propulsores e asas.
+- Remove itens.
+- Processa despressurização.
+- Imprime avisos.
+
+Eu preservaria uma função longa para os efeitos periódicos, mas mudaria seu contrato.
+
+Ela seria responsável apenas pelo avanço temporal dos sistemas danificados.
+
+Isso inclui a progressão da falha de motor, as consequências da criogenia, o tempo até a despressurização e a perda periódica de itens.
+
+Não deveria aplicar novamente uma penalidade estática em atributos apenas porque mais uma rodada passou.
+
+Existe uma distinção a estabelecer conforme cada regra:
+
+- Penalidade fixa enquanto danificado: o slot recebe sempre o mesmo valor.
+- Penalidade acumulativa por rodada: o slot é calculado a partir da duração da avaria.
+
+Ambas podem ser implementadas sem operações incrementais nos próprios atributos.
+
+No segundo caso, o número de rodadas transcorridas é o estado persistente; a penalidade é apenas seu resultado.
+
+Isso atende inclusive à sua regra para o motor: a falha permanece registrada, sua penalidade cresce em magnitude a cada rodada e a velocidade cai progressivamente até zero. Consertar o motor encerra a condição e elimina sua contribuição para a penalidade, sem que seja necessário somar manualmente os valores perdidos.
+
+### 4.6. `genescudo()` — manter independente
+
+Esta função já tem uma responsabilidade relativamente clara: regenerar os escudos.
+
+Eu a manteria separada da sincronização dos modificadores, porque regeneração é um evento que altera um recurso, e não o cálculo de um atributo derivado.
+
+Apenas corrigiria sua relação com o estado do gerador.
+
+Um gerador danificado não regenera; um escudo destruído também não regenera até o reparo pertinente.
+
+A rotina deve respeitar as capacidades atuais sem restaurar cargas simplesmente porque o modo energético mudou.
+
+### 4.7. `atualizaroverclock()` — transformar em evento de fim de rodada
+
+A função atual ainda conserva a ideia antiga de dano ao motor, usando `motorquente` e `riscomotor`.
+
+Além disso, a expressão que atualiza `riscoverclock` estabelece quatro como mínimo, em vez de iniciar a progressão a partir de um quarto.
+
+Com a regra esclarecida, a função fica muito mais simples.
+
+Ela precisa verificar se o overclock está ativo, atualizar o contador de exposição, realizar o sorteio de falha e, quando necessário, registrar dano no gerador de escudos.
+
+Não precisa alterar os slots de escudo diretamente.
+
+A sincronização cuidará de atualizar suas capacidades, e `genescudo()` respeitará o estado danificado.
+
+Eu também colocaria a avaliação de risco antes da regeneração no fechamento da rodada, para evitar que um gerador destruído pelo overclock regenere escudos naquela mesma etapa.
+
+## 5. Eliminar estados redundantes
+
+O dicionário `f` mistura estados primários, resultados derivados, contadores temporais e controles de interface.
+
+Essa mistura é mais problemática do que o fato de ele ser global.
+
+Algumas variáveis podem ser removidas porque representam informações que já existem em outro lugar.
+
+| Estado atual           | Proposta                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `motorquente`          | Derivar de `overclock[0]`                                                                            |
+| `riscomotor`           | Reservar exclusivamente para a falha de motor, se necessário; não usar para o gerador de escudos     |
+| `riscoverclock`        | Manter como contador próprio do overclock                                                            |
+| `podeusartorpedo`      | Calcular a partir dos equipamentos, munição e demais condições                                       |
+| `podeusarcomms`        | Calcular a partir do rádio e do estado dos sistemas de comunicação                                   |
+| `novoprop` e `novaasa` | Incorporar imediatamente ao registro do dano sorteado                                                |
+| `numprops` e `numasas` | Manter como contadores ou derivar de avarias individuais, mas evitar duas fontes de verdade          |
+| `rodssemgrav`          | Manter somente se a duração da avaria for relevante para seus efeitos                                |
+| `criodesmaio`          | Escolher uma única representação, pois há um array e uma entrada de `f` relacionados a essa condição |
+| `genescudo`            | Manter uma representação consistente do estado funcional do gerador, consultada por todas as rotinas |
+
+Não eliminaria indiscriminadamente todos os flags. Alguns representam estados reais e úteis: um equipamento danificado, uma porta bloqueada, uma avaria permanente.
+
+A regra é mais específica: um mesmo fato não deve precisar ser atualizado em dois lugares diferentes.
+
+Outro ponto é a função `setfoo()`. Como ela apenas atribui um valor ao dicionário, não oferece uma abstração significativa. É perfeitamente aceitável substituí-la por atribuições diretas na parte pertinente do programa.
+
+Não é uma mudança essencial, mas reduz chamadas desnecessárias.
+
+## 6. Como organizar os dados sem orientação a objetos excessiva
+
+Seguindo suas diretrizes, não vejo necessidade de criar classes para cada equipamento, sistema de dano ou tipo de modificador.
+
+Utilizaria algumas estruturas leves, agrupadas por responsabilidade.
+
+| Grupo            | Conteúdo                                                            |
+| ---------------- | ------------------------------------------------------------------- |
+| Atributos        | Arrays das habilidades e parâmetros derivados                       |
+| Sistemas da nave | Modos, equipamentos ligados/desligados, direção dos escudos         |
+| Avarias          | Danos existentes, intensidades, localizações e contadores temporais |
+| Recursos         | HP, cargas atuais de escudo, munição, inventários                   |
+| Partida          | Rodada, personagem atual, ações restantes, vitória e derrota        |
+
+Esses grupos poderiam ser dicionários ou registros simples, inclusive `dataclass` sem métodos.
+
+A agregação seria organizacional, não uma mudança nas regras do jogo. O `getstat()` continuaria trabalhando com os mesmos arrays.
+
+Também não criaria módulos para cada grupo desde já. Inicialmente, manteria tudo organizado em seções de `jogo.py`. Uma eventual divisão em arquivos deveria refletir responsabilidades reais, como regras do jogo e interface, e não cada conjunto de funções.
+
+### Funções puras: onde realmente valem a pena
+
+Eu reservaria funções puras para cálculos que podem ser expressos sem modificar o estado:
+
+- Calcular a capacidade frontal e traseira dos escudos.
+- Determinar a penalidade total de velocidade produzida pelos propulsores danificados.
+- Determinar a penalidade progressiva de um motor.
+- Calcular o risco do overclock a partir do contador.
+- Verificar se um equipamento pode ser utilizado.
+- Determinar o valor efetivo de um atributo para um teste.
+
+Já as operações como receber dano, reparar, selecionar modo e avançar rodada são naturalmente imperativas. Não há benefício em forçá-las a retornar cópias inteiras do estado apenas para serem consideradas puras.
+
+Para as rotinas maiores, seguiria sua preferência: se as etapas fazem parte de uma única operação e não são reutilizadas independentemente, elas podem continuar dentro da mesma função, separadas por comentários.
+
+Funções aninhadas também seriam adequadas para cálculos auxiliares utilizados exclusivamente durante uma ação, evitando introduzir nomes globais sem necessidade.
+
+O objetivo é reduzir dependências reais, não necessariamente reduzir o número de linhas de cada função.
+
+## 7. Uma observação sobre `rolar()` e os bônus de cargo
+
+A correção sobre os bônus de cargo muda a recomendação anterior.
+
+Concordo em mantê-los no slot `[8]` de maneira permanente.
+
+O que precisa ser separado são duas informações:
+
+Pontuação usada para determinar o nível dos dados: deve excluir o bônus de cargo, conforme sua regra.
+
+Pontuação ou bônus aplicado ao resultado do teste: pode incluir o bônus de cargo e os demais modificadores pertinentes.
+
+Não é necessário colocar o bônus temporariamente no array nem removê-lo após a rolagem.
+
+Isso também evita uma falha do código atual: quando ocorre um crítico, `rolar()` retorna antes de executar a limpeza do slot `[8]`.
+
+A solução, portanto, é consultar os mesmos dados de duas maneiras, sem modificar o array durante a realização do teste.
+
+Eu manteria as DTs simplificadas, os resultados `FAIL`, `EASY`, `MEDIUM`, `HARD` e o crítico simplificado. Não introduziria os subsistemas de falha crítica ou dificuldades específicas que você decidiu descartar.
+
+## 8. Como ficaria o fechamento da rodada
+
+A rotina `eor()` também merece revisão, mas não precisa se tornar um grande controlador abstrato.
+
+Sugiro que continue sendo a função responsável por executar o fechamento da rodada, com uma sequência explícita:
+
+1. Processar os efeitos temporizados das avarias.
+2. Atualizar a degradação do motor e a despressurização.
+3. Avaliar o risco do overclock e registrar eventual falha do gerador.
+4. Processar as perdas de itens e outros efeitos periódicos.
+5. Sincronizar os modificadores e as capacidades derivados dos estados atuais.
+6. Regenerar os escudos que ainda podem regenerar.
+7. Verificar condições de encerramento e preparar a próxima rodada.
+
+Não há motivo para uma rotina de danos chamar outra que modifica equipamentos, que chama outra que redistribui energia.
+
+Cada etapa lê os estados já definidos e altera somente o que lhe compete.
+
+O fechamento também deve respeitar a diferença entre um estado que muda imediatamente, como desligar o sonar, e um efeito que ocorre apenas ao término da rodada, como uma perda periódica de carga.
+
+## 9. Prioridades da refatoração
+
+Eu executaria a revisão na seguinte ordem, sem tentar modificar todo o programa simultaneamente.
+
+| Prioridade | Intervenção                                                               | Benefício                                                  |
+| ---------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 1          | Parar de usar `getstat()` para estados booleanos, modos e recursos brutos | Elimina erros fundamentais de leitura                      |
+| 2          | Separar estados primários dos valores derivados                           | Estabelece uma fonte de verdade                            |
+| 3          | Retirar `setdirect()` de `setmodo()` e `setmodo()` de `flip()`            | Rompe a primeira cadeia de chamadas                        |
+| 4          | Reestruturar `utilbase()` e `ajustar_util()`                              | Evita reconfiguração desnecessária dos quatro equipamentos |
+| 5          | Introduzir a sincronização central dos modificadores                      | Padroniza a escrita dos slots                              |
+| 6          | Refazer os danos como estados persistentes                                | Elimina penalidades incrementais difíceis de controlar     |
+| 7          | Refazer os consertos como remoção ou redução de avarias                   | Elimina a matemática inversa                               |
+| 8          | Simplificar `danos()` e `atualizaroverclock()`                            | Organiza os efeitos temporais                              |
+| 9          | Revisar a ordem de `eor()`                                                | Impede conflitos entre risco, danos e regeneração          |
+
+Durante essa refatoração, testaria especialmente a propriedade de idempotência da sincronização: executá-la duas vezes, sem qualquer alteração de estado entre as chamadas, deve produzir exatamente os mesmos valores.
+
+Esse é um excelente teste para descobrir modificadores que continuam sendo incrementados indevidamente.
+
+Outros testes essenciais seriam desligar e religar um equipamento, alternar repetidamente os modos energéticos e danificar e reparar componentes na presença de outras avarias. Os valores finais devem depender exclusivamente dos estados que permanecerem ativos, não da sequência histórica de operações.
+
+## 10. Contrato de design para as próximas implementações
+
+As clarificações passam a orientar as próximas etapas deste projeto. Em particular, vou considerar como requisitos fixos:
+
+- Python com biblioteca padrão e `curses`, em terminal maximizado, sem necessidade de portabilidade ou distribuição.
+- Arquitetura prioritariamente procedural e imperativa.
+- Preservação do `getstat()` e dos slots reservados dos atributos.
+- Bônus de cargo permanentes, excluídos da determinação do nível do dado.
+- Rolagens simplificadas, sem falhas críticas e sem DTs específicas por tipo de teste.
+- Danos em subsistemas somente quando o casco recebe dano.
+- Overclock com risco progressivo de falha do gerador de escudos.
+- Falha do motor com redução progressiva da velocidade até zero, reversível pelo conserto.
+- Despressurização como impedimento de passagem pelo microhangar.
+- Funções preferencialmente puras quando isso não prejudicar a clareza; operações de estado explicitamente imperativas.
+- Preferência por parametrização, escopo local, funções aninhadas quando oportunas e organização por seções comentadas, sem extrações artificiais.
+
+### Síntese da recomendação
+
+A transformação mais importante não exige substituir os arrays, criar novas classes ou dividir cada operação em várias funções pequenas.
+
+É suficiente estabelecer uma distinção rigorosa:
+
+Os estados primários descrevem o que aconteceu com a nave; os slots descrevem as consequências atuais desses estados.
+
+Um disparo registra a avaria. Um conserto modifica ou remove a avaria. Uma única rotina calcula os modificadores correspondentes. O `getstat()` soma esses modificadores quando uma habilidade precisa deles.
+
+Com essa organização, `setmodo()`, `flip()`, `setdirect()`, `ajustar_util()`, `hitnave()` e `consertar()` deixam de precisar conhecer o funcionamento interno uns dos outros.
+
+Considero essa a mudança de maior impacto e menor complexidade adicional para a base atual. Ela preserva o caráter procedural que você procura e torna a integração com o `curses` muito mais direta, pois o display passa a consultar um estado coerente depois de cada ação concluída.
