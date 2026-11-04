@@ -3,7 +3,7 @@ import array
 
 #categorias de stats
 mob = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50] #mobilidade
-ger = [51, 52, 53, 54, 55, 56] #geral
+ger = [51, 52, 53, 54, 55, 56, 61] #geral
 nav = [22, 23, 24, 25, 26, 27] #navegação
 com = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39] #comunicação
 
@@ -154,6 +154,8 @@ mobilidade = initstat(57)
 combate = initstat(58)
 nave = initstat(59)
 geral = initstat(60)
+rastreamento = initstat(61)
+rastreamento[0] = 1
 
 #buffs/debuffs modo: stat[1]
 #buffs/debuffs crio: stat[2]
@@ -318,7 +320,7 @@ capacidade_inventarios = (
 
 #centraliza os estados dos quartos
 quartos = {
-    'salacomum': (0, 'salacomum', salacomum),
+    'salacomum': (0, 'danosalacomum', salacomum),
     'quarto1': (1, 'quarto1dano', quarto1),
     'quarto2': (2, 'quarto2dano', quarto2),
     'quarto3': (3, 'quarto3dano', quarto3),
@@ -372,7 +374,7 @@ def hitnave(intensidade, direcao=None): #acertos de inimigos
                 local = 'Cozinha'
             case 6:
                 quarto = ('salacomum','quarto1','quarto2','quarto3','quarto4','quarto5')[rand() % 6]
-                f['salacomum' if quarto == 'salacomum' else quarto + 'dano'] = True
+                f['danosalacomum' if quarto == 'salacomum' else quarto + 'dano'] = True
                 local = quarto
             case 7:
                 f['danocomms'] = True
@@ -640,6 +642,10 @@ def avançar_nave():
     map[x+1] = " X "
 
 
+
+#espaguete extremo. Curses é amaldiçoado. Metade eu entendo, metade é magia, tive que usar o gpt pra
+#criar essas viagem de sentinela e submenu pq n deu nao mto dificil fazer o pc desenhar
+
 import curses
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
@@ -685,6 +691,7 @@ def mostrar_status(stdscr, items):
     stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
     stdscr.refresh()
 
+#pra testar, vai ser função dedicada depois
 criarinimigo("leve")
 criarinimigo("pesado")
 criarinimigo("medio")
@@ -697,7 +704,7 @@ def mostrar_inimigos(stdscr, items):
     y, x = stdscr.getmaxyx()
     w = x +4 - largura*2
     j,k = 1,1
-    colunaum, colunadois = inimigos.copy(), inimigos.copy()
+    colunaum, colunadois = items.copy(), items.copy()
     while len(colunaum) > 6:
         colunaum.popitem()
     for I in range(1, 7):
@@ -816,8 +823,9 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
             item = items[current]
             if item.submenu:
                 stdscr.clear()
-                result = run_menu(stdscr, item.submenu, draw_extras=draw_extras)
-                if result is EXIT:
+                submenu = item.submenu() if callable(item.submenu) else item.submenu
+                result = run_menu(stdscr, submenu, draw_extras=draw_extras) if submenu else BACK
+                if result == EXIT:
                     return EXIT
                 # BACK from child → fall through, redraw this level
             elif item.action:
@@ -861,6 +869,29 @@ def ajustar_util(alvo):
     atualizar_stats()
     return True
 
+def atirar(tipo, alvo):
+    def ajustedano(tipo):
+        dano = (getstat(danofront) if tipo == "front"
+            else getstat(danoaae) if tipo == "aae"
+            else getstat(danotorp) if tipo == "torp"
+            else "Inválido")
+        return dano if dano != "Inválido" else "Dano Inválido"
+    dano = ajustedano(tipo)
+    if alvo in inimigos and isinstance(dano, (int, float)):
+        inimigos[alvo]["hp"] -= dano
+        if inimigos[alvo]["hp"] <= 0: 
+            inimigos.pop(alvo)
+    else:
+        return "Alvo Inválido"
+
+
+def listar_inimigos(tipodano):
+    lista = []
+    for nome, inimigo in inimigos.items():
+        lista.append(opt(nome, action = lambda s, nome=nome: atirar(tipodano, nome)),)
+    lista.append(opt("Voltar", action = lambda s: BACK))
+    return lista
+
 # ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
 MENU = [opt("Piloto", submenu=[
         opt("Acelerar"),
@@ -868,10 +899,11 @@ MENU = [opt("Piloto", submenu=[
         opt("Manobrar"),
         opt("Navegar"),
         opt("Usar Utilitários"),
-        opt("Ajudar Engenheiro"),
-        opt("Atirar em Inimigos"),
-        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-            opt("Sim", action = force_confirm),
+        opt("Ajudar Engenheiro"), 
+        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos("front")
+            ),
+        opt("Confirmar Ações", submenu=[
+            opt("Sim", action = lambda s: force_confirm),
             opt("Não", action = lambda s: BACK),]),
         opt("Voltar", action = lambda s: BACK),
         ]),
@@ -885,7 +917,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Ajudar Engenheiro"),
         opt("Atirar em Inimigos"),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-            opt("Sim", action = force_confirm),
+            opt("Sim", action = lambda s: force_confirm),
             opt("Não", action = lambda s: BACK),]),
         opt("Voltar", action = lambda s: BACK)]),
 
@@ -901,7 +933,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Deslocar", action=lambda s: None),
         opt("Interagir", action=lambda s: None),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = force_confirm),
+        opt("Sim", action = lambda s: force_confirm),
         opt("Não", action = lambda s: BACK),
         ]),
         opt("Voltar",        action=lambda s: BACK),
@@ -923,7 +955,7 @@ MENU = [opt("Piloto", submenu=[
             opt("Voltar", action = lambda s: BACK),
         ]),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = force_confirm),
+        opt("Sim", action = lambda s: force_confirm),
         opt("Não", action = lambda s: BACK),
         ]),
         opt("Voltar", action = lambda s: BACK),
