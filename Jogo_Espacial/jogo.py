@@ -842,16 +842,43 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
         draw(stdscr, items, current, draw_extras)
 
 #game actions
-def confirmar_acoes(stdscr):
-    if f['turnosatuais'] < 3:
-        turnos = f'Você ainda tem {f['turnosatuais']} ações!'
-        stdscr.addstr((h // 2) - 2, w // 2 - len(turnos) // 2, turnos)
-    h, w = stdscr.getmaxyx()
-    #stdscr.clear()
-    msg = "Ações Confirmadas"
-    stdscr.addstr(h // 2, w // 2 - len(msg) // 2, msg)
-    stdscr.refresh()
-    timer(25)
+
+buffer = array.array('H')
+def add_buffer(ação, custo, alvo, cargo, prox):
+    #2 bytes por pacote:
+
+    #Byte 1: Ação
+    #6 bits: ação (0-63; 1-64)
+    #2 bits: custo de ações (0-3; 1-4)
+
+    #Byte 2: Interagíveis
+    #4 bits: alvo (0-15; 1-16)
+    #3 bits: cargo (0-7; 1-8)
+    #1 bit: booleano "continuar próxima rodada" (0-1)
+
+    pacote = ação<<10 | custo<<8 | alvo<<4 | cargo<<1 | prox
+    action_queue = array.array('H', [pacote])
+    buffer.extend(action_queue)
+    return buffer
+
+def listar_pacotes():
+    return print(buffer)
+
+def read_buffer(pos):
+        pacote = buffer[pos]
+        packbytes = struct.pack('<H', pacote)
+        unpack = struct.unpack('<H', packbytes)[0]
+        Ação = (unpack >> 10) & 0x3F #0011 1111
+        Custo = (unpack >> 8) & 0x03 #0000 0011
+        Alvo = (unpack >>  4) & 0x0F #0000 1111
+        Cargo = (unpack >> 1) & 0x07 #0000 0111
+        Prox = (unpack)       & 0x01 #0000 0001
+        return [Ação, Custo, Alvo, Cargo, Prox]
+
+def confirmar_acoes(stdscr, cargo):
+    if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return "cargo invalido"
+    for x in range(0, len(buffer)+1):
+        read_buffer(0)
 
 def escape_seq():
     setfoo('gameon', 0)
