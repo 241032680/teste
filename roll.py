@@ -56,36 +56,36 @@ bonus_cargo = {
 #print(bonus_cargo)
 dts= [(10, 12, 14), (11, 14, 18), (12, 16, 21), (13, 18, 24), (18, 26, 36)]
 
-def rolar(teste, cargo):
-    print(teste)
-    if teste[15] in bonus_cargo[cargo]:
-        teste[7] = bonus_cargo[cargo][teste[15]]
-    stat = getstat(teste)
-    print(teste)
-    bonus = stat % 5 + getstat(rolls)
-    print(bonus)
-    level = min((stat//5), 5)
-    print(level)
-    dice = (6, 8, 10, 12, 20)
-    print(dice[level])
-    result = [((rand()%dice[level])+1), ((rand()%dice[level])+1), ((rand()%dice[level])+1)]
-    print(result)
-    soma = sum(result)
-    print(soma)
-    if soma == dice[level]*3:
-        return "CRIT"
-    soma += bonus
-    print(soma)
-    facil = dts[level][0]
-    medio = dts[level][1]
-    dificil = dts[level][2]
-    if soma < facil:
-        return "FAIL"
-    if soma >= facil and soma < medio:
-        return "EASY"
-    if soma >= medio and soma < dificil:
-        return "MEDIUM"
-    if soma >= dificil:
-        return "HARD"
-print(rolar(comunicaçao, 'engenheiro'))
-
+#def rolar(teste, cargo):
+#    print(teste)
+#    if teste[15] in bonus_cargo[cargo]:
+#        teste[7] = bonus_cargo[cargo][teste[15]]
+#    stat = getstat(teste)
+#    print(teste)
+#    bonus = stat % 5 + getstat(rolls)
+#    print(bonus)
+#    level = min((stat//5), 5)
+#    print(level)
+#    dice = (6, 8, 10, 12, 20)
+#    print(dice[level])
+#    result = [((rand()%dice[level])+1), ((rand()%dice[level])+1), ((rand()%dice[level])+1)]
+#    print(result)
+#    soma = sum(result)
+#    print(soma)
+#    if soma == dice[level]*3:
+#        return "CRIT"
+#    soma += bonus
+#    print(soma)
+#    facil = dts[level][0]
+#    medio = dts[level][1]
+#    dificil = dts[level][2]
+#    if soma < facil:
+#        return "FAIL"
+#    if soma >= facil and soma < medio:
+#        return "EASY"
+#    if soma >= medio and soma < dificil:
+#        return "MEDIUM"
+#    if soma >= dificil:
+#        return "HARD"
+#print(rolar(comunicaçao, 'engenheiro'))
+print(0b111)
