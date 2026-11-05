@@ -1,0 +1,28 @@
+iniciar array: foo = array.array('b', [...]). "[...]" é o conteudo, 'b' é o tipo (signed char). 
+
+'u/w' unicode, 'h' short, 'i' int, 'l' long, 'q' long long, 'e' float 16, 'f' float, 'd' double, 'zf' float complex, 'Zd' double complex. minusculo signed (sem negativo), maiusuculo unsigned
+
+array.typecodes()
+
+foo.count(valor)
+
+foo.extend(iterable)
+	append. se for outro array, tem q ser mesmo typecode
+
+foo.fromfile(file, numitems) e foo.fromlist(lista) são append também
+
+foo.index(valor[, start[,stop]])
+
+foo.insert(index, valor)
+
+foo.pop(index, valor)
+
+foo.remove(valor)
+	remove a primeira instancia
+
+foo.clear()
+
+foo.reverse()
+
+foo.tofile(file) / foo.tolist()
+
