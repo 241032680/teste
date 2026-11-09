@@ -1,5 +1,6 @@
 import time
 import array
+import struct
 
 #categorias de stats
 mob = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50] #mobilidade
@@ -270,6 +271,9 @@ def atualizar_stats():
     f['podeusartorpedo'] = bool(sonarativo)
     f['podeusarcomms'] = bool(radioativo)
     f['hangarselado'] = f['danohangar'] and depressurização[0] == 0
+
+    # ações virtuais
+    ações_virtuais[:] = calcular_acoes_virtuais(buffer, ações_cargo)
 
 def setmodo(modo):
     modoativo[0] = modo if modo in MODOS else 1
@@ -876,6 +880,21 @@ def read_buffer(pos):
         return [Ação, Custo, Alvo, Cargo, Prox]
 
 ações_cargo=[3,3,3,3,3]
+ações_virtuais = ações_cargo.copy()
+
+def calcular_acoes_virtuais(buffer, ações_cargo):
+    virtuais = ações_cargo.copy()
+    for x, pacote in enumerate(buffer):
+        custo = (pacote >> 8) & 0x03
+        cargo = (pacote >> 1) & 0x07
+        if cargo < len(virtuais):
+            virtuais[cargo] = max(0, virtuais[cargo] - custo)
+        else:
+            pk = bin(pacote)[2:]
+            cg = bin(cargo)[2:]
+            bpkt = f"{pk[0:-10]}|{pk[-10:-8]}|{pk[-8:-4]}|{pk[-4:-1]}|{pk[-1]}"
+            print(f"Cargo Invalido {{{cargo}({cg})}} in buffer {x}: {{{pacote};{bpkt}}}")
+    return virtuais
 
 def confirmar_acoes(cargo):
     if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return print("Cargo Invalido")
@@ -885,14 +904,22 @@ def confirmar_acoes(cargo):
             atirar(args[2], args[3])
         elif args[0] ==1:
             ajustar_util(args[2])
+        elif args[2] ==2:
+            ações_cargo[args[3]] - 1
+        elif args[3] == 3:
+            pass
         max(ações_cargo[args[3]] - int(args[1]), 0)
 
 def escape_seq():
     setfoo('gameon', 0)
     setfoo('gamewin', 1)
 
-def force_confirm():
-    setfoo('turnosatuais', 3)
+def force_confirm(idxcargo):
+    cargos = ("piloto", "copiloto", "engenheiro", "atirador", "aae")
+    ações_cargo[idxcargo] -= 3
+    cargo = cargos[idxcargo]
+    confirmar_acoes(cargo)
+    return BACK
 
 def ajustar_util(alvo):
     equipamentos = [crio, sonar, radio, grav]
@@ -900,6 +927,7 @@ def ajustar_util(alvo):
     #    return False
     equipamento = equipamentos[alvo]
     equipamento[0] = int(not equipamento[0])
+    print(equipamento[0])
     atualizar_stats()
     return True
 
@@ -918,13 +946,18 @@ def atirar(tipo, alvo):
     else:
         return "Alvo Inválido"
 
-
 def listar_inimigos(tipodano):
     lista = []
     for nome, inimigo in inimigos.items():
         lista.append(opt(nome, action = lambda s, nome=nome: atirar(tipodano, nome)),)
     lista.append(opt("Voltar", action = lambda s: BACK))
     return lista
+
+
+def terminar_util(cargo):
+    prox = 1 if ações_cargo[cargo] <=1 else 0
+    add_buffer(2, 0, 1, cargo, prox)
+    return BACK
 
 # ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
 MENU = [opt("Piloto", submenu=[
@@ -937,7 +970,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Atirar em Inimigos", submenu=lambda: listar_inimigos("front")
             ),
         opt("Confirmar Ações", submenu=[
-            opt("Sim", action = lambda s: force_confirm),
+            opt("Sim", action = lambda s: force_confirm(0)),
             opt("Não", action = lambda s: BACK),]),
         opt("Voltar", action = lambda s: BACK),
         ]),
@@ -951,23 +984,23 @@ MENU = [opt("Piloto", submenu=[
         opt("Ajudar Engenheiro"),
         opt("Atirar em Inimigos"),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-            opt("Sim", action = lambda s: force_confirm),
+            opt("Sim", action = lambda s: force_confirm(1)),
             opt("Não", action = lambda s: BACK),]),
         opt("Voltar", action = lambda s: BACK)]),
 
     opt("Engenheiro", submenu=[
         opt("Consertar",   action=lambda s: None),
         opt("Abrir Painel de Utilitários", submenu=[
-            opt("Ajustar Gravidade", action=lambda s: add_buffer(1, 0, 0, 4, 0)),
+            opt("Ajustar Gravidade", action=lambda s: add_buffer(1, 0, 2, 4, 0)),
             opt("Ajustar Sonar", action=lambda s: ajustar_util("sonar")),
             opt("Ajustar Rádio", action=lambda s: ajustar_util("radio")),
             opt("Ajustar Criogenia", action=lambda s: ajustar_util("crio")),
-            opt("Terminar", action = add_buffer(2, 0, 1, 4, 0))
+            opt("Terminar", action = lambda s: terminar_util(2))
         ]),
         opt("Deslocar", action=lambda s: None),
         opt("Interagir", action=lambda s: None),
-        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = lambda s: force_confirm),
+        opt("Confirmar Ações", submenu=[
+        opt("Sim", action = lambda s: force_confirm(2)),
         opt("Não", action = lambda s: BACK),
         ]),
         opt("Voltar",        action=lambda s: BACK),
@@ -989,7 +1022,7 @@ MENU = [opt("Piloto", submenu=[
             opt("Voltar", action = lambda s: BACK),
         ]),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = lambda s: force_confirm),
+        opt("Sim", action = lambda s: force_confirm(3)),
         opt("Não", action = lambda s: BACK),
         ]),
         opt("Voltar", action = lambda s: BACK),
@@ -1001,7 +1034,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Procurar Ponto Fraco",   action=lambda s: None),
         opt("Levantar",               action=lambda s: None),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = force_confirm),
+        opt("Sim", action = force_confirm(4)),
         opt("Não", action = lambda s: BACK),
         ]),
         opt("Voltar", action = lambda s: BACK),
@@ -1036,6 +1069,3 @@ if __name__ == '__main__':
             eor() #processa danos contínuos e atualizações de fim de rodada
             setfoo('rods', f['rods'] + 1) #conta rodadas completas
             setfoo('turnosatuais', 0) #prepara a próxima rodada
-
-
-

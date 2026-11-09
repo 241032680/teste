@@ -1,3 +1,6 @@
+import array
+import struct
+
 buffer = array.array('H')
 def add_buffer(ação, custo, alvo, cargo, prox):
     #2 bytes por pacote:
@@ -28,9 +31,7 @@ def read_buffer(pos):
         Alvo = (unpack >>  4) & 0x0F #0000 1111
         Cargo = (unpack >> 1) & 0x07 #0000 0111
         Prox = (unpack)       & 0x01 #0000 0001
-        return [Ação, Custo, Alvo, Cargo, Prox]
-
-ações_cargo=[3,3,3,3,3]
+        return (Ação, Custo, Alvo, Cargo, Prox)
 
 def confirmar_acoes(cargo):
     if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return print("Cargo Invalido")
