@@ -1,0 +1,2 @@
+00: atirar
+01: ajustar utilitários

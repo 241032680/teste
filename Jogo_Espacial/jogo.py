@@ -1,6 +1,7 @@
 import time
 import array
 import struct
+from collections import Counter
 
 #categorias de stats
 mob = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50] #mobilidade
@@ -221,6 +222,81 @@ MODOS = {
     5: (8, -1, -3, 5, -2, 1, 2),
 }
 
+
+#buffer de ações 
+#grava as escolhas do player pra poder modificar com undo se precisar e tbm armazena info de cada escolha
+buffer = array.array('H')
+def add_buffer(*componentes):
+    #2 bytes por pacote:
+    #--
+    #Byte 1: Ação
+    #6 bits: ação (0-63; 1-64)
+    #2 bits: custo de ações (0-3; 1-4)
+    #--
+    #Byte 2: Interagíveis
+    #4 bits: alvo (0-15; 1-16)
+    #3 bits: cargo (0-7; 1-8)
+    #1 bit: booleano "continuar próxima rodada" (0-1)
+    #mascara pq a bosta do python fica cortando os zeros frontais
+    if len(componentes) < 5 and len(componentes)>0:
+        ação = componentes[0]
+        custo = componentes[1] if len(componentes) >=2 else 1
+        alvo = componentes[2] if len(componentes) >=3 else 0
+        cargo = componentes[3] if len(componentes) >=4 else 0
+        prox = 0
+    if len(componentes) >= 5:
+        ação, custo, alvo, cargo, prox = componentes[0], componentes[1], componentes[2], componentes[3], componentes[4]
+    pacote = array.array('H', [((ação&0x4f)<<2 |(custo&0x3))<<8 | ((alvo&0xf)<<4 |(cargo&0x7)<<1 |(prox&0x1))])
+    buffer.extend(pacote)
+    return buffer
+
+def listar_pacotes():
+    a = max((pac.bit_length() for pac in buffer), default=0)
+    for x, pac in enumerate(buffer):
+        print(f'{x}: {pac:0{a}b}')
+
+def read_buffer(pos):
+        packbytes = struct.pack('<H', buffer[pos])
+        unpack = struct.unpack('<H', packbytes)[0]
+        Ação = (unpack >> 10) & 0x3F #0011 1111
+        Custo = (unpack >> 8) & 0x03 #0000 0011
+        Alvo = (unpack >>  4) & 0x0F #0000 1111
+        Cargo = (unpack >> 1) & 0x07 #0000 0111
+        Prox = (unpack)       & 0x01 #0000 0001
+        return [Ação, Custo, Alvo, Cargo, Prox]
+
+ações_cargo=[3,3,3,3,3]
+ações_virtuais = ações_cargo.copy() #pra display
+
+def calcular_acoes_virtuais(buffer, ações_cargo):
+    virtuais = ações_cargo.copy()
+    for x, pacote in enumerate(buffer):
+        custo = (pacote >> 8) & 0x03
+        cargo = (pacote >> 1) & 0x07
+        if cargo < len(virtuais):
+            virtuais[cargo] = max(0, virtuais[cargo] - custo)
+        else:
+            pk = bin(pacote)[2:]
+            cg = bin(cargo)[2:]
+            bpkt = f"{pk[0:-10]}|{pk[-10:-8]}|{pk[-8:-4]}|{pk[-4:-1]}|{pk[-1]}"
+            print(f"Cargo Invalido {{{cargo}({cg})}} in buffer {x}: {{{pacote};{bpkt}}}")
+    return virtuais
+
+def confirmar_acoes(cargo):
+    if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return print("Cargo Invalido")
+    for x in range(0, len(buffer)):
+        args = read_buffer(x)
+        if args[0] == 0:
+            atirar(args[2], args[3])
+        elif args[0] ==1:
+            ajustar_util(args[2])
+        elif args[2] ==2:
+            ações_cargo[args[3]] - 1
+        elif args[3] == 3:
+            pass
+        max(ações_cargo[args[3]] - int(args[1]), 0)
+
+#eor
 def atualizar_stats():
     def distribuir_escudos(total, direcao):
         if direcao == 2:
@@ -337,7 +413,7 @@ def additem(local, nome, valor):
 #rodada: cada jogador e inimmigo tem seu turno
 #turno de cada jogador: 3 ações
 #turno de cada inimigo: instantâneo
-#ordem de turnos: piloto, copiloto, engenheiro, atirador, atirador aaebase, ajuste de distância, inimigos
+#ordem de turnos: tripulação, ajuste de distância, inimigos
 
 def hitnave(intensidade, direcao=None): #acertos de inimigos
     intensidade = intensidade.lower()
@@ -530,34 +606,21 @@ def eor():
 #inimigo
 
 def criarinimigo(tipo):
-    if tipo == "medio":
-        qtmissel = 3
-        qthp = 40
-        qtesc = 5
-        v = 4.56
-        s = 5
-    elif tipo == "pesado":
-        qtmissel = 4
-        qtesc = 10
-        qthp = 80
-        v = 6.66
-        s = 4
-    else:
-        qtmissel = 2
-        v = 1.5
-        qthp = 0
-        qtmissel = 3
-        qtesc = 0
-        s = 6
+    qtmissel =   3 if tipo=="medio" else 4    if tipo=="pesado" else 2
+    qthp =      40 if tipo=="medio" else 80   if tipo=="pesado" else 0
+    qtesc =      5 if tipo=="medio" else 10   if tipo=="pesado" else 0
+    v =       4.56 if tipo=="medio" else 6.66 if tipo=="pesado" else 1.5
+    s =          5 if tipo=="medio" else 4    if tipo=="pesado" else 6
     if len(inimigos) > 10:
         return 0
     n = len(inimigos)
-    inimigos[f'i{(n+1)}'] = {
+    inimigos[f'Inimigo {(n+1)}'] = {
     "tipo" : tipo,
     "hp" : int(30 + qthp + float(((sin(rand())) * 6.66))),
     "velocidade": int(s),
     "mísseis" : int(rand()%qtmissel + sin(rand())),
-    "escudo": int((10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2))
+    "escudo": int((10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2)),
+    "posmapa": int((rand()%36)+(sin(rand())*20))
     }
 
 i1 = {
@@ -566,22 +629,24 @@ i1 = {
     "velocidade": 6,
     "mísseis" : int(rand()%3 + sin(rand())),
     "escudo": int((10 + (sin(rand()) * 1.5)) * ((sin(rand()) + 1.5)//2.2)),
+    "posmapa": 6
     #"tipo de missel": tipomissel(),
     #"tipo de escudo": tipoescudo(),
-    #"tipo de dano": tipodano(),
-  }
+    #"tipo de dano": tipodano()
+    }
 
 i2 = {"tipo" : "medio", 
 "hp" : int(30 + 40 + float(((sin(rand())) * 6.66))),
-"escudo": int((10 + 5 + (sin(rand()) * 4.56)) * ((sin(rand()) + 1.5)//2.2))}
+"escudo": int((10 + 5 + (sin(rand()) * 4.56)) * ((sin(rand()) + 1.5)//2.2)),
+"posmapa": 86}
 
 i3 = {"tipo" : "pesado",
 "hp" : int(30 + 80 + float(((sin(rand())) * 6.66))),
-"escudo": int((10 + 10 + (sin(rand()) * 6.66)) * ((sin(rand()) + 1.5)//2.2))}
-
-inimigos = {"i1" : i1,
-"i2" : i2,
-"i3" : i3} 
+"escudo": int((10 + 10 + (sin(rand()) * 6.66)) * ((sin(rand()) + 1.5)//2.2)),
+"posmapa": 16}
+inimigos = {"Inimigo 1" : i1,
+"Inimigo 2" : i2,
+"Inimigo 3" : i3} 
 
 for x in range(1, 19):
     additem(armazém, str(x), rand()%90)
@@ -638,14 +703,24 @@ def rolar(teste, cargo):
     return 'HARD'
 #print(rolar(comunicaçao, 'engenheiro'))
 
-map = ["X"] + ["0"]*20
 
-def avançar_nave():
-    x = map.index("X")
-    map[x] = 0
-    map[x+1] = " X "
+map = ['X'] + ['0']*98 + ['D']
 
+def avançar_nave(vel):
+    x = map.index('X')
+    map[x] = '0'
+    map[x+vel] = 'X'
+def mapsplit():
+    map_segs = []
+    for z in range(0, 10):
+        map_segs.append(map[(10*z):((10*z)+10)])
+    return map_segs
 
+def avançar_inimigos():
+    numinimigos = len(inimigos)
+    for n in range(1, numinimigos+1):
+        inimigospot = inimigos.get(f"Inimigo {n}").get("posmapa")
+        map[inimigospot] = "I"
 
 #espaguete extremo. Curses é amaldiçoado. Metade eu entendo, metade é magia, tive que usar o gpt pra
 #criar essas viagem de sentinela e submenu pq n deu nao mto dificil fazer o pc desenhar
@@ -701,8 +776,8 @@ criarinimigo("pesado")
 criarinimigo("medio")
 criarinimigo("pesado")
 
-
 def mostrar_inimigos(stdscr, items):
+
     duas_colunas = bool(len(items)>6)
     largura = max(len(key) for inimigo in items.values() for key in inimigo) + 2
     y, x = stdscr.getmaxyx()
@@ -713,7 +788,7 @@ def mostrar_inimigos(stdscr, items):
         colunaum.popitem()
     for I in range(1, 7):
         try:
-            colunadois.pop(f"i{I}")
+            colunadois.pop(f"Inimigo {I}")
         except:
             pass
     stdscr.addstr(j, w - (largura*duas_colunas*2), "┌" + "─" * (largura+((largura)//2)+2) + "┐")
@@ -721,27 +796,32 @@ def mostrar_inimigos(stdscr, items):
     if duas_colunas:
         stdscr.addstr(j, w-2, "┌" + "─" * (largura+((largura)//2)+2) + "┐")
         stdscr.addstr(j+1, w-2, "│ ".ljust((largura-2)//2) + "INIMIGOS".center((largura-2)) + " │".rjust((largura-2)//2))
-
+    fillchar = f'{chr(3869)}'
+    tab = fillchar*4
     for nome, inimigo in colunaum.items():
-        stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f"| --- {nome} {"-" * ((largura + 2))}|")
+        alvo = f" {nome} "
+        larguratotal = (largura+((largura)//2)+2)
+        stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f'|{tab}{alvo.ljust(larguratotal-len(tab), fillchar)}|')
         j += 1
         for key, value in inimigo.items():
-            if j < 33:
+            if key != "posmapa":
                 stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
                 j += 1
     for nome, Inimigo in colunadois.items():
-        stdscr.addstr(2 + k, w-2, f"| --- {nome} {"-" * ((largura + 2))}|")
+        alvo = f" {nome} "
+        larguratotal = (largura+((largura)//2)+2)
+        stdscr.addstr(2 + k, w-2, f'|{tab}{alvo.ljust(larguratotal-len(tab), fillchar)}|')
         k += 1
         for key, value in Inimigo.items():
-            stdscr.addstr(2 + k, w-2, f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
-            k +=1
-
+            if key != "posmapa":
+                stdscr.addstr(2 + k, w-2, f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
+                k +=1
     stdscr.addstr(j+2, w - (largura*duas_colunas*2), "└" + "─" * (largura+((largura)//2)+2) + "┘")
     if duas_colunas: 
         stdscr.addstr(k+2, w-2, "└" + "─" * (largura+((largura)//2)+2) + "┘")
 
-menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
 
+menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
 def mostrar_inputs(stdscr, items):
     y, x = stdscr.getmaxyx()
     largura = max(len(text) for text in items) + 2
@@ -751,19 +831,33 @@ def mostrar_inputs(stdscr, items):
     stdscr.refresh()
 
 def mostrar_mapa(stdscr, items):
-    y, x = stdscr.getmaxyx()
-    largura = len(items)
-    for i, text in enumerate(items):
-        stdscr.addstr(1, x//2-(2*largura)+(2*i), "-" + str(text) + "-")
+    y, h = stdscr.getmaxyx()
+    posicoes = Counter(i["posmapa"] for i in inimigos.values())
+    for line in range(0, len(items)):
+        largura = len(items[line]) + 1
+        for i, text in enumerate(items[line]):
+            y = 2+(2*line)
+            x = h//2-(2*largura)+(3*i)
+            pos = line*10+i
+            #stdscr.addstr(y, x, "-" + str(text) + "-")
+            stdscr.addstr(y, x, "-")
+            stdscr.addstr(y, x+1, str(text), cor(text) | (curses.A_BOLD if posicoes[pos] > 1 else 0))
+            stdscr.addstr(y, x+2, "-")
 
 def draw_extras(stdscr):
+    global vertical
     mostrar_status(stdscr, status_nave())
     mostrar_inimigos(stdscr, inimigos)
     mostrar_inputs(stdscr, menu_inputs)
-    mostrar_mapa(stdscr, map)
+    if vertical != 1: mostrar_mapa(stdscr, mapsplit()) 
+
+def cor(text):
+    cores = {"I": 2,"X": 3,"D": 4}
+    return curses.color_pair(cores.get(str(text).upper(), 0))
 
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.clear()
+    vertical = 0
     h, w = stdscr.getmaxyx()
     draw_extras(stdscr)
     if draw_extras:
@@ -801,7 +895,6 @@ def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
             stdscr.attroff(curses.color_pair(1))
         else:
             stdscr.addstr(y, x, label)
-
     stdscr.refresh()
 
 def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
@@ -812,8 +905,11 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
     draw_extras(stdscr) is painted before menu items on every redraw,
     so you can overlay text boxes, live game values, banners, etc.
     """
+    global vertical
+    vertical = 0
     current  = 0
     draw     = draw_menu_horizontal if layout == "horizontal" else draw_menu_vertical
+    vertical = 1 if draw == draw_menu_vertical else 0
     key_prev = curses.KEY_LEFT  if layout == "horizontal" else curses.KEY_UP
     key_next = curses.KEY_RIGHT if layout == "horizontal" else curses.KEY_DOWN
     draw(stdscr, items, current, draw_extras)
@@ -847,68 +943,6 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
 
 #game actions
 
-buffer = array.array('H')
-def add_buffer(ação, custo, alvo, cargo, prox):
-    #2 bytes por pacote:
-    #--
-    #Byte 1: Ação
-    #6 bits: ação (0-63; 1-64)
-    #2 bits: custo de ações (0-3; 1-4)
-    #--
-    #Byte 2: Interagíveis
-    #4 bits: alvo (0-15; 1-16)
-    #3 bits: cargo (0-7; 1-8)
-    #1 bit: booleano "continuar próxima rodada" (0-1)
-    #mascara pq a bosta do python fica cortando os zeros frontais
-    pacote = array.array('H', [((ação&0x4f)<<2 |(custo&0x3))<<8 | ((alvo&0xf)<<4 |(cargo&0x7)<<1 |(prox&0x1))])
-    buffer.extend(pacote)
-    return buffer
-
-def listar_pacotes():
-    a = max((pac.bit_length() for pac in buffer), default=0)
-    for x, pac in enumerate(buffer):
-        print(f'{x}: {pac:0{a}b}')
-
-def read_buffer(pos):
-        packbytes = struct.pack('<H', buffer[pos])
-        unpack = struct.unpack('<H', packbytes)[0]
-        Ação = (unpack >> 10) & 0x3F #0011 1111
-        Custo = (unpack >> 8) & 0x03 #0000 0011
-        Alvo = (unpack >>  4) & 0x0F #0000 1111
-        Cargo = (unpack >> 1) & 0x07 #0000 0111
-        Prox = (unpack)       & 0x01 #0000 0001
-        return [Ação, Custo, Alvo, Cargo, Prox]
-
-ações_cargo=[3,3,3,3,3]
-ações_virtuais = ações_cargo.copy()
-
-def calcular_acoes_virtuais(buffer, ações_cargo):
-    virtuais = ações_cargo.copy()
-    for x, pacote in enumerate(buffer):
-        custo = (pacote >> 8) & 0x03
-        cargo = (pacote >> 1) & 0x07
-        if cargo < len(virtuais):
-            virtuais[cargo] = max(0, virtuais[cargo] - custo)
-        else:
-            pk = bin(pacote)[2:]
-            cg = bin(cargo)[2:]
-            bpkt = f"{pk[0:-10]}|{pk[-10:-8]}|{pk[-8:-4]}|{pk[-4:-1]}|{pk[-1]}"
-            print(f"Cargo Invalido {{{cargo}({cg})}} in buffer {x}: {{{pacote};{bpkt}}}")
-    return virtuais
-
-def confirmar_acoes(cargo):
-    if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return print("Cargo Invalido")
-    for x in range(0, len(buffer)):
-        args = read_buffer(x)
-        if args[0] == 0:
-            atirar(args[2], args[3])
-        elif args[0] ==1:
-            ajustar_util(args[2])
-        elif args[2] ==2:
-            ações_cargo[args[3]] - 1
-        elif args[3] == 3:
-            pass
-        max(ações_cargo[args[3]] - int(args[1]), 0)
 
 def escape_seq():
     setfoo('gameon', 0)
@@ -932,13 +966,15 @@ def ajustar_util(alvo):
     return True
 
 def atirar(tipo, alvo):
+    #atirar("front", i1)
     def ajustedano(tipo):
-        dano = (getstat(danofront) if tipo in (0b000, 0b001)
-            else getstat(danoaae) if tipo == 0b011
-            else getstat(danotorp) if tipo == 0b010
+        dano = (getstat(danofront) if tipo in (0, 1)
+            else getstat(danoaae) if tipo == 3
+            else getstat(danotorp) if tipo == 2
             else "Inválido")
         return dano if dano != "Inválido" else "Dano Inválido"
     dano = ajustedano(tipo)
+    alvo = f"i{alvo+1}"
     if alvo in inimigos and isinstance(dano, (int, float)):
         inimigos[alvo]["hp"] -= dano
         if inimigos[alvo]["hp"] <= 0: 
@@ -946,10 +982,10 @@ def atirar(tipo, alvo):
     else:
         return "Alvo Inválido"
 
-def listar_inimigos(tipodano):
+def listar_inimigos(cargo):
     lista = []
-    for nome, inimigo in inimigos.items():
-        lista.append(opt(nome, action = lambda s, nome=nome: atirar(tipodano, nome)),)
+    for alvo, nome in enumerate(inimigos.keys()):
+        lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(0, 2, alvo, cargo, 0)),)
     lista.append(opt("Voltar", action = lambda s: BACK))
     return lista
 
@@ -959,6 +995,10 @@ def terminar_util(cargo):
     add_buffer(2, 0, 1, cargo, prox)
     return BACK
 
+
+avançar_nave(55)
+avançar_inimigos()
+
 # ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
 MENU = [opt("Piloto", submenu=[
         opt("Acelerar"),
@@ -967,7 +1007,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Navegar"),
         opt("Usar Utilitários"),
         opt("Ajudar Engenheiro"), 
-        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos("front")
+        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(0)
             ),
         opt("Confirmar Ações", submenu=[
             opt("Sim", action = lambda s: force_confirm(0)),
@@ -982,7 +1022,8 @@ MENU = [opt("Piloto", submenu=[
         opt("Navegar"),
         opt("Usar Utilitários"),
         opt("Ajudar Engenheiro"),
-        opt("Atirar em Inimigos"),
+        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(1)
+            ),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
             opt("Sim", action = lambda s: force_confirm(1)),
             opt("Não", action = lambda s: BACK),]),
@@ -1048,7 +1089,12 @@ MENU = [opt("Piloto", submenu=[
 def main(stdscr):
     curses.curs_set(0)
     curses.noecho()
+    curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(2, curses.COLOR_RED, -1)
+    curses.init_pair(3, 118, -1)
+    curses.init_pair(4, curses.COLOR_GREEN, -1)
+    curses.start_color()
     run_menu(stdscr, MENU, layout="horizontal", draw_extras=draw_extras)
     # To add game-state overlays to the top layer:
     # run_menu(stdscr, MENU, layout="horizontal", draw_extras=my_hud_fn)

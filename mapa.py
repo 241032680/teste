@@ -1,29 +1,20 @@
-map = [[["X"] + ["0"]*9],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10],
-    [["0"]*10]
-]
+map = [' X '] + ["0"]*99
 
-def avançar_nave():
-    x = map.index(7)
+def avançar_nave(vel):
+    x = map.index(' X ')
     map[x] = 0
-    map[x+1] = 7
+    map[x+vel] = ' X '
 
-print(map)
-avançar_nave()
-print(map)
 
-avançar_nave()
-print(map)
-avançar_nave()
-print(map)
-avançar_nave()
-print(map)
-avançar_nave()
-print(map)
+print(f'\n{map}')
+avançar_nave(7)
+print(f'\n{map}')
+
+avançar_nave(6)
+print(f'\n{map}')
+avançar_nave(7)
+print(f'\n{map}')
+avançar_nave(9)
+print(f'\n{map}')
+avançar_nave(8)
+print(f'\n{map}')
