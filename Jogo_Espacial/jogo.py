@@ -112,51 +112,52 @@ riscomotor = initstat(21)
 numtorpedos[0],numaae[0],numfrontal[0],hp[0],velmax[0],direct[0],modoativo[0],grav[0],sonar[0],radio[0],crio[0],danotorp[0],danoaae[0],danofront[0],criodesmaio[0],depressurização[0],riscomotor[0] = 5,8,6,20,7,1,1,1,1,1,1,1,1,1,5,3,8
 
 #stats
-rolls = initstat(0)
-pilotagem = initstat(22)
-utilitarios = initstat(23)
-comunicaçao = initstat(24)
-conserto = initstat(25)
-navegaçao = initstat(26)
-tecnica = initstat(27)
+stats = [(rolls := initstat(0)),
+(pilotagem := initstat(22)),
+(utilitarios := initstat(23)),
+(comunicaçao := initstat(24)),
+(conserto := initstat(25)),
+(navegaçao := initstat(26)),
+(tecnica := initstat(27)),
+(cover := initstat(28)),
+(curtoalc:= initstat(29)),
+(medioalc:= initstat(30)),
+(longoalc:= initstat(31)),
+(armasenergia:= initstat(32)),
+(armasprojetil:= initstat(33)),
+(bastoes:= initstat(34)),
+(corpoacorpo:= initstat(35)),
+(laminas:= initstat(36)),
+(mira:= initstat(37)),
+(percepçao:= initstat(38)),
+(resistencia := initstat(39)),
+(agilidade := initstat(40)),
+(corridacurta := initstat(41)),
+(corridalonga := initstat(42)),
+(desvio := initstat(43)),
+(escalar := initstat(44)),
+(equilibrio := initstat(45)),
+(furtividade := initstat(46)),
+(nataçao := initstat(47)),
+(nocaute := initstat(48)),
+(salto := initstat(49)),
+(temperaturasextremas := initstat(50)),
+(carisma := initstat(51)),
+(sorte := initstat(52)),
+(saude := initstat(53)),
+(força := initstat(54)),
+(intimidação := initstat(55)),
+(abrirtravas := initstat(56)),
+(mobilidade := initstat(57)),
+(combate := initstat(58)),
+(nave := initstat(59)),
+(geral := initstat(60)),
+(rastreamento := initstat(61))]
 pilotagem[0],utilitarios[0],comunicaçao[0],conserto[0],navegaçao[0],tecnica[0]= 1,1,1,1,1,1
-cover = initstat(28)
-curtoalc= initstat(29)
-medioalc= initstat(30)
-longoalc= initstat(31)
-armasenergia= initstat(32)
-armasprojetil= initstat(33)
-bastoes= initstat(34)
-corpoacorpo= initstat(35)
-laminas= initstat(36)
-mira= initstat(37)
-percepçao= initstat(38)
-resistencia = initstat(39)
 curtoalc[0],medioalc[0],longoalc[0],armasenergia[0],armasprojetil[0],bastoes[0],corpoacorpo[0],laminas[0],mira[0],percepçao[0],resistencia[0] = 1,1,1,1,1,1,1,1,1,1,1
 rolls[0],cover[0],mira[0],percepçao[0] = 0,1,1,1
-agilidade = initstat(40)
-corridacurta = initstat(41)
-corridalonga = initstat(42)
-desvio = initstat(43)
-escalar = initstat(44)
-equilibrio = initstat(45)
-furtividade = initstat(46)
-nataçao = initstat(47)
-nocaute = initstat(48)
-salto = initstat(49)
-temperaturasextremas = initstat(50)
+
 agilidade[0],corridacurta[0],corridalonga[0],desvio[0],escalar[0],equilibrio[0],furtividade[0],nataçao[0],nocaute[0],salto[0],temperaturasextremas[0] = 1,1,1,1,1,1,1,1,1,1,1
-carisma = initstat(51)
-sorte = initstat(52)
-saude = initstat(53)
-força = initstat(54)
-intimidação = initstat(55)
-abrirtravas = initstat(56)
-mobilidade = initstat(57)
-combate = initstat(58)
-nave = initstat(59)
-geral = initstat(60)
-rastreamento = initstat(61)
 rastreamento[0] = 1
 
 #buffs/debuffs modo: stat[1]
@@ -167,6 +168,7 @@ rastreamento[0] = 1
 #buffs/debuffs danonave: stat[6]
 #stats/debuffs players: stat [7]
 #buffs cargo: stat[8]
+#buffs de uma rodada: stat[9]
 
 #randomizador
 setrand('d', 1)
@@ -252,8 +254,7 @@ def add_buffer(*componentes):
 
 def listar_pacotes():
     a = max((pac.bit_length() for pac in buffer), default=0)
-    for x, pac in enumerate(buffer):
-        print(f'{x}: {pac:0{a}b}')
+    for x, pac in enumerate(buffer): print(f'{x}: {pac:0{a}b}')
 
 def read_buffer(pos):
         packbytes = struct.pack('<H', buffer[pos])
@@ -293,16 +294,14 @@ def confirmar_acoes(cargo):
         elif args[2] ==2:
             ações_cargo[args[3]] - 1
         elif args[3] == 3:
-            pass
+            procurar_ponto_fraco()
         max(ações_cargo[args[3]] - int(args[1]), 0)
 
 #eor
 def atualizar_stats():
     def distribuir_escudos(total, direcao):
-        if direcao == 2:
-            return int(total * 1.5), ceil(total, 2)
-        if direcao == 3:
-            return ceil(total, 2), int(total * 1.5)
+        if direcao == 2: return int(total * 1.5), ceil(total, 2)
+        if direcao == 3: return ceil(total, 2), int(total * 1.5)
         return total, total
 
     #modo de energia
@@ -350,6 +349,10 @@ def atualizar_stats():
 
     # ações virtuais
     ações_virtuais[:] = calcular_acoes_virtuais(buffer, ações_cargo)
+
+    #buffs temporarios
+    for stat in stats:
+        stat[9] = 0
 
 def setmodo(modo):
     modoativo[0] = modo if modo in MODOS else 1
@@ -539,19 +542,13 @@ def inventorycheck(): #corrigido: remove itens aleatórios ao exceder a capacida
 def danos():
     mensagens = []
 
-    if f['danograv']:
-        f['rodssemgrav'] += 1
-
+    if f['danograv']: f['rodssemgrav'] += 1
     if f['hitcrio'] or not crio[0]:
         f['criodesmaio'] = max(0, f['criodesmaio'] - 1)
-        if f['criodesmaio'] == 0:
-            mensagens.append('Tripulação desmaiou por falha na criogenia')
+        if f['criodesmaio'] == 0: mensagens.append('Tripulação desmaiou por falha na criogenia')
     else:
         f['criodesmaio'] = min(5, f['criodesmaio'] + 1)
-
-    if f['falhamotor']:
-        f['rodsfalhamotor'] += 1
-
+    if f['falhamotor']: f['rodsfalhamotor'] += 1
     if f['danopropulsores']:
         if f['novoprop'] == 1 and f['numprops'] < 9:
             setfoo('numprops', min(f['numprops'] + 1, 9)) #corrigido: respeita a capacidade máxima
@@ -562,30 +559,20 @@ def danos():
     depressurizacao_restante = depressurização[0]
     if f['danohangar']:
         depressurização[0] = max(0, depressurização[0] - 1)
-        if depressurização[0] == 0:
-            mensagens.append('Microhangar despressurizado')
-
-    for estado, inventario in (
-        ('danoarmazém', armazém), ('danomedbay', medbay), ('danocozinha', cozinha),
-    ):
-        if f[estado] and inventario:
-            inventario.pop(tuple(inventario)[rand() % len(inventario)])
-
+        if depressurização[0] == 0: mensagens.append('Microhangar despressurizado')
+    for estado, inventario in (('danoarmazém', armazém),('danomedbay', medbay),('danocozinha', cozinha)): 
+        if f[estado] and inventario: inventario.pop(tuple(inventario)[rand() % len(inventario)])
     for indice, estado, inventario in quartos.values():
-        if f[estado] and inventario:
-            inventario.pop(tuple(inventario)[rand() % len(inventario)])
+        if f[estado] and inventario: inventario.pop(tuple(inventario)[rand() % len(inventario)])
     return mensagens
 
 def genescudo():
     if f['genescudo']:
-        if f['escudoefetivof'] > 0:
-            f['escudoefetivof'] = escudof[0]
-        if f['escudoefetivot'] > 0:
-            f['escudoefetivot'] = escudot[0]
+        if f['escudoefetivof'] > 0: f['escudoefetivof'] = escudof[0]
+        if f['escudoefetivot'] > 0: f['escudoefetivot'] = escudot[0]
 
 def atualizaroverclock():
-    if not overclock[0] or not f['genescudo']:
-        return False
+    if not overclock[0] or not f['genescudo']: return False
     f['riscoverclock'] += 1
     if rand() % 4 < min(f['riscoverclock'], 4):
         f['genescudo'] = False
@@ -596,11 +583,11 @@ def atualizaroverclock():
 
 def eor():
     mensagens = danos()
-    if atualizaroverclock():
-        mensagens.append('Overclock fritou o gerador de escudos')
+    if atualizaroverclock(): mensagens.append('Overclock fritou o gerador de escudos')
     inventorycheck()
     atualizar_stats()
     genescudo()
+    for stat in stats: stat[9] = 0
     return mensagens
 
 #inimigo
@@ -611,8 +598,7 @@ def criarinimigo(tipo):
     qtesc =      5 if tipo=="medio" else 10   if tipo=="pesado" else 0
     v =       4.56 if tipo=="medio" else 6.66 if tipo=="pesado" else 1.5
     s =          5 if tipo=="medio" else 4    if tipo=="pesado" else 6
-    if len(inimigos) > 10:
-        return 0
+    if len(inimigos) > 10: return 0
     n = len(inimigos)
     inimigos[f'Inimigo {(n+1)}'] = {
     "tipo" : tipo,
@@ -620,7 +606,8 @@ def criarinimigo(tipo):
     "velocidade": int(s),
     "mísseis" : int(rand()%qtmissel + sin(rand())),
     "escudo": int((10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2)),
-    "posmapa": int((rand()%36)+(sin(rand())*20))
+    "posmapa": int((rand()%36)+(sin(rand())*20)),
+    "marcado": False
     }
 
 i1 = {
@@ -629,7 +616,8 @@ i1 = {
     "velocidade": 6,
     "mísseis" : int(rand()%3 + sin(rand())),
     "escudo": int((10 + (sin(rand()) * 1.5)) * ((sin(rand()) + 1.5)//2.2)),
-    "posmapa": 6
+    "posmapa": 6,
+    "marcado": False,
     #"tipo de missel": tipomissel(),
     #"tipo de escudo": tipoescudo(),
     #"tipo de dano": tipodano()
@@ -638,12 +626,15 @@ i1 = {
 i2 = {"tipo" : "medio", 
 "hp" : int(30 + 40 + float(((sin(rand())) * 6.66))),
 "escudo": int((10 + 5 + (sin(rand()) * 4.56)) * ((sin(rand()) + 1.5)//2.2)),
-"posmapa": 86}
+"posmapa": 86,
+"marcado": False}
 
 i3 = {"tipo" : "pesado",
 "hp" : int(30 + 80 + float(((sin(rand())) * 6.66))),
 "escudo": int((10 + 10 + (sin(rand()) * 6.66)) * ((sin(rand()) + 1.5)//2.2)),
-"posmapa": 16}
+"posmapa": 16,
+"marcado": False}
+
 inimigos = {"Inimigo 1" : i1,
 "Inimigo 2" : i2,
 "Inimigo 3" : i3} 
@@ -684,25 +675,17 @@ def rolar(teste, cargo):
         base += combate[0]
     elif teste[15] in nav:
         base += nave[0]
-
     level = min(max(base // 5, 0), 4)
     dice = (6,8,10,12,20)[level]
     dados = [rand() % dice + 1 for _ in range(3)]
-    if sum(dados) == dice * 3:
-        return 'CRIT'
+    if sum(dados) == dice * 3: return 'CRIT'
     bonus_cargo_atual = bonus_cargo.get(cargo, {}).get(teste[15], 0)
     bonus_extra = bonus_cargo_atual - teste[8]
     total = sum(dados) + base % 5 + getstat(teste) - base + bonus_extra
     facil, medio, dificil = dts[level]
-    if total < facil:
-        return 'FAIL'
-    if total < medio:
-        return 'EASY'
-    if total < dificil:
-        return 'MEDIUM'
-    return 'HARD'
+    return 'FAIL' if total < facil else 'EASY' if total < medio else 'MEDIO' if total < dificil else "HARD"
+        
 #print(rolar(comunicaçao, 'engenheiro'))
-
 
 map = ['X'] + ['0']*98 + ['D']
 
@@ -710,10 +693,10 @@ def avançar_nave(vel):
     x = map.index('X')
     map[x] = '0'
     map[x+vel] = 'X'
+
 def mapsplit():
     map_segs = []
-    for z in range(0, 10):
-        map_segs.append(map[(10*z):((10*z)+10)])
+    for z in range(0, 10): map_segs.append(map[(10*z):((10*z)+10)])
     return map_segs
 
 def avançar_inimigos():
@@ -764,9 +747,7 @@ def mostrar_status(stdscr, items):
     y, x = stdscr.getmaxyx()
     x = 1
     stdscr.addstr(1, x, "┌" + "─" * largura + "┐")
-
-    for i, text in enumerate(items):
-        stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
+    for i, text in enumerate(items): stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
     stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
     stdscr.refresh()
 
@@ -777,7 +758,6 @@ criarinimigo("medio")
 criarinimigo("pesado")
 
 def mostrar_inimigos(stdscr, items):
-
     duas_colunas = bool(len(items)>6)
     largura = max(len(key) for inimigo in items.values() for key in inimigo) + 2
     y, x = stdscr.getmaxyx()
@@ -804,7 +784,7 @@ def mostrar_inimigos(stdscr, items):
         stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f'|{tab}{alvo.ljust(larguratotal-len(tab), fillchar)}|')
         j += 1
         for key, value in inimigo.items():
-            if key != "posmapa":
+            if key != "posmapa" and key != "marcado":
                 stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
                 j += 1
     for nome, Inimigo in colunadois.items():
@@ -813,20 +793,18 @@ def mostrar_inimigos(stdscr, items):
         stdscr.addstr(2 + k, w-2, f'|{tab}{alvo.ljust(larguratotal-len(tab), fillchar)}|')
         k += 1
         for key, value in Inimigo.items():
-            if key != "posmapa":
+            if key != "posmapa" and key != "marcado":
                 stdscr.addstr(2 + k, w-2, f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
                 k +=1
     stdscr.addstr(j+2, w - (largura*duas_colunas*2), "└" + "─" * (largura+((largura)//2)+2) + "┘")
-    if duas_colunas: 
-        stdscr.addstr(k+2, w-2, "└" + "─" * (largura+((largura)//2)+2) + "┘")
+    if duas_colunas: stdscr.addstr(k+2, w-2, "└" + "─" * (largura+((largura)//2)+2) + "┘")
 
 
 menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
 def mostrar_inputs(stdscr, items):
     y, x = stdscr.getmaxyx()
     largura = max(len(text) for text in items) + 2
-    for i, text in enumerate(menu_inputs):
-        stdscr.addstr((y//3)+i+2, 1, text)
+    for i, text in enumerate(menu_inputs): stdscr.addstr((y//3)+i+2, 1, text)
     stdscr.addstr(y//2, 1, f'y: {y} x: {x}')
     stdscr.refresh()
 
@@ -860,8 +838,7 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     vertical = 0
     h, w = stdscr.getmaxyx()
     draw_extras(stdscr)
-    if draw_extras:
-        draw_extras(stdscr)
+    if draw_extras: draw_extras(stdscr)
     gap = 2
     espaçamento = 1
     button_widths = [len(item.label) + (espaçamento * 2) for item in items]
@@ -871,11 +848,9 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
         bw   = button_widths[idx]
         text = item.label.center(bw - 2)
         stdscr.addstr(y + 1, x, "┌" + "─" * (bw - 2) + "┐")
-        if idx == selected:
-            stdscr.attron(curses.color_pair(1))
+        if idx == selected: stdscr.attron(curses.color_pair(1))
         stdscr.addstr(y + 2, x, "│" + text + "│")
-        if idx == selected:
-            stdscr.attroff(curses.color_pair(1))
+        if idx == selected: stdscr.attroff(curses.color_pair(1))
         stdscr.addstr(y + 3, x, "└" + "─" * (bw - 2) + "┘")
         x += bw + gap
     stdscr.refresh()
@@ -883,8 +858,7 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
 def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
     stdscr.erase()
     h, w = stdscr.getmaxyx()
-    if draw_extras:
-        draw_extras(stdscr)
+    if draw_extras: draw_extras(stdscr)
     for idx, item in enumerate(items):
         label = ("▶ " if item.submenu else "  ") + item.label
         x = w // 2 - len(label) // 2
@@ -925,8 +899,7 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
                 stdscr.clear()
                 submenu = item.submenu() if callable(item.submenu) else item.submenu
                 result = run_menu(stdscr, submenu, draw_extras=draw_extras) if submenu else BACK
-                if result == EXIT:
-                    return EXIT
+                if result == EXIT: return EXIT
                 # BACK from child → fall through, redraw this level
             elif item.action:
                 result = item.action(stdscr)
@@ -973,28 +946,36 @@ def atirar(tipo, alvo):
             else getstat(danotorp) if tipo == 2
             else "Inválido")
         return dano if dano != "Inválido" else "Dano Inválido"
+    
+    cargos = [danofront, danotorp, danoaae]
     dano = ajustedano(tipo)
+    if inimigos.get(f"Inimigo {alvo+1}").get("marcado"): dano -= cargos[tipo]
     alvo = f"i{alvo+1}"
     if alvo in inimigos and isinstance(dano, (int, float)):
         inimigos[alvo]["hp"] -= dano
-        if inimigos[alvo]["hp"] <= 0: 
-            inimigos.pop(alvo)
+        if inimigos[alvo]["hp"] <= 0: inimigos.pop(alvo)
     else:
         return "Alvo Inválido"
 
-def listar_inimigos(cargo):
+def listar_inimigos(cargo, opçao):
+    #opçoes: 00 atirar; 03 procurar ptos fracos; 
     lista = []
     for alvo, nome in enumerate(inimigos.keys()):
-        lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(0, 2, alvo, cargo, 0)),)
+        lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(opçao, 2, alvo, cargo, 0)),)
     lista.append(opt("Voltar", action = lambda s: BACK))
     return lista
-
 
 def terminar_util(cargo):
     prox = 1 if ações_cargo[cargo] <=1 else 0
     add_buffer(2, 0, 1, cargo, prox)
     return BACK
 
+def procurar_ponto_fraco(alvo, cargo):
+    result = rolar(percepçao, "aae")
+    a,b,c = danoaae[9],danofront[9],danotorp[9]
+    bonus = 3 if result == "HARD" else 2 if result == "MEDIO" else 1
+    for stat in stats:
+        stat[9] += bonus
 
 avançar_nave(55)
 avançar_inimigos()
@@ -1007,7 +988,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Navegar"),
         opt("Usar Utilitários"),
         opt("Ajudar Engenheiro"), 
-        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(0)
+        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(0, 0)
             ),
         opt("Confirmar Ações", submenu=[
             opt("Sim", action = lambda s: force_confirm(0)),
@@ -1022,7 +1003,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Navegar"),
         opt("Usar Utilitários"),
         opt("Ajudar Engenheiro"),
-        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(1)
+        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(1, 0)
             ),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
             opt("Sim", action = lambda s: force_confirm(1)),
@@ -1047,8 +1028,8 @@ MENU = [opt("Piloto", submenu=[
         opt("Voltar",        action=lambda s: BACK),
     ]),   
 
-    opt("Atirador",submenu=[
-        opt("Atirar em um Inimigo",   action=lambda s: None),
+        opt("Atirador",submenu=[
+        opt("Atirar em um Inimigo",   submenu=lambda: listar_inimigos(3, 0)),
         opt("Abrir Painel de Utilitários", submenu=[
             opt("Ajustar Gravidade", action = lambda s: ajustar_util("grav")),
             opt("Ajustar Sonar", action=lambda s: ajustar_util("sonar")),
@@ -1070,9 +1051,9 @@ MENU = [opt("Piloto", submenu=[
     ]),
 
     opt("Atirador AAE", submenu=[
-        opt("Atirar em um Inimigo",   action=lambda s: None),
+        opt("Atirar em um Inimigo",   submenu=lambda: listar_inimigos(4, 0)),
         opt("Trocar Tipo de Munição", action=lambda s: None),
-        opt("Procurar Ponto Fraco",   action=lambda s: None),
+        opt("Procurar Ponto Fraco",   submenu=lambda: listar_inimigos(4, 0)),
         opt("Levantar",               action=lambda s: None),
         opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
         opt("Sim", action = force_confirm(4)),
@@ -1101,10 +1082,8 @@ def main(stdscr):
 
 if __name__ == '__main__':
     while f['gameon'] == 1:
-        if f['foo'] > 1 or f['foo'] <= 0:
-            setfoo('foo', 1)
-        if f['gamewin'] == 1:
-            setfoo('gameon', 0)
+        if f['foo'] > 1 or f['foo'] <= 0: setfoo('foo', 1)
+        if f['gamewin'] == 1: setfoo('gameon', 0)
         if f['turnosatuais'] <3:
             setfoo('turnos', f['turnos']+1)
             #[coisas dentro do turno]
