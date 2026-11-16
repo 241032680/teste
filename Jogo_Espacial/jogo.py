@@ -195,25 +195,44 @@ setfoo('quarto4dano', False)
 setfoo('quarto5dano', False)
 setfoo('podeusartorpedo', True)
 setfoo('podeusarcomms', True)
-setfoo('motorfrito', False)
-setfoo('motorquente', False)
 setfoo('hangarselado', False)
 
-#tipos de dano
+#tipos de dano(munição)
 setfoo('tipoaae', 1)
 setfoo('tipotorp', 1)
 
-f.update({
-    'danocrio': False, 'danograv': False, 'danohangar': False,
-    'danoasa': False, 'danoquartos': False, 'danopropulsores': False,
-    'danoarmazém': False, 'danomedbay': False, 'danocozinha': False, 'danosalacomum': False,
-    'danocomms': False, 'genescudo': True, 'hitcrio': 0,
-    'rodssemgrav': 0, 'rodsfalhamotor': 0, 'falhamotor': False,
-    'numquartos': 0, 'riscoverclock': 0, 'hangarselado': False,
-    'podeusartorpedo': True, 'podeusarcomms': True,
-    'tipoaae': 1, 'tipotorp': 1, 'direçãoinimigo': None,
-    'escudoefetivof': 0, 'escudoefetivot': 0, 'criodesmaio': 5,
-})
+#categorias de dano
+setfoo('danocrio', False)
+setfoo('danograv', False)
+setfoo('danohangar', False)
+setfoo('danoasa', False)
+setfoo('danoquartos', False)
+setfoo('danopropulsores', False)
+setfoo('danoarmazém', False)
+setfoo('danomedbay', False)
+setfoo('danocozinha', False)
+setfoo('danosalacomum', False)
+setfoo('danocomms', False)
+setfoo('genescudo', True)
+setfoo('hitcrio', 0)
+setfoo('rodssemgrav', 0)
+setfoo('rodsfalhamotor', 0)
+setfoo('falhamotor', False)
+setfoo('numquartos', 0)
+setfoo('riscoverclock', 0)
+setfoo('hangarselado', False)
+setfoo('podeusartorpedo', True)
+setfoo('podeusarcomms', True)
+setfoo('tipoaae', 1)
+setfoo('tipotorp', 1)
+setfoo('direçãoinimigo', None)
+setfoo('escudoefetivof', 0)
+setfoo('escudoefetivot', 0)
+setfoo('criodesmaio', 5)
+setfoo('novoprop', 0)
+setfoo('velreal', 0)
+setfoo('marcha_atual', 2)  
+marchas = [1, 2, 3, 4, 5]
 
 
 MODOS = {
@@ -287,14 +306,11 @@ def confirmar_acoes(cargo):
     if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return print("Cargo Invalido")
     for x in range(0, len(buffer)):
         args = read_buffer(x)
-        if args[0] == 0:
-            atirar(args[2], args[3])
-        elif args[0] ==1:
-            ajustar_util(args[2])
-        elif args[2] ==2:
-            ações_cargo[args[3]] - 1
-        elif args[3] == 3:
-            procurar_ponto_fraco()
+        if args[0] == 0: atirar(args[3], args[2])
+        elif args[0] == 1: ajustar_util(args[2])
+        elif args[0] == 2: ações_cargo[args[3]] - 1
+        elif args[0] == 3: procurar_ponto_fraco()
+        elif args[0] == 4: setmodo(args[2])
         max(ações_cargo[args[3]] - int(args[1]), 0)
 
 #eor
@@ -350,9 +366,9 @@ def atualizar_stats():
     # ações virtuais
     ações_virtuais[:] = calcular_acoes_virtuais(buffer, ações_cargo)
 
-    #buffs temporarios
-    for stat in stats:
-        stat[9] = 0
+    #velocidade real
+    marchas[0] = 0 if f['marcha_atual'] == 5 else 1
+    setfoo('velreal', getstat(velmax) - marchas[-(f['marcha_atual'])])
 
 def setmodo(modo):
     modoativo[0] = modo if modo in MODOS else 1
@@ -581,12 +597,25 @@ def atualizaroverclock():
         return True
     return False
 
+def odd_motor_fritar():
+    #marchas: +1/12 risco por marcha depois da 2 (1/12, 1/6, 1/4)
+    risco = getstat(riscomotor)
+    if rand() % 12 < min(risco, 12): setfoo('falhamotor', True)
+    for n in range (0, getstat(riscomotor)):
+        if riscomotor[n] != 1: riscomotor[n] = 1
+        elif riscomotor[n+1] != 1: riscomotor[n+1] = 1
+        if getstat(riscomotor) > risco + 1: break
+
 def eor():
     mensagens = danos()
     if atualizaroverclock(): mensagens.append('Overclock fritou o gerador de escudos')
     inventorycheck()
     atualizar_stats()
     genescudo()
+    odd_motor_fritar()
+    avançar_nave(f['velreal'])
+    avançar_inimigos()
+
     for stat in stats: stat[9] = 0
     return mensagens
 
@@ -693,6 +722,7 @@ def avançar_nave(vel):
     x = map.index('X')
     map[x] = '0'
     map[x+vel] = 'X'
+
 
 def mapsplit():
     map_segs = []
@@ -938,6 +968,8 @@ def ajustar_util(alvo):
     atualizar_stats()
     return True
 
+
+danofront[4] = 10
 def atirar(tipo, alvo):
     #atirar("front", i1)
     def ajustedano(tipo):
@@ -949,8 +981,8 @@ def atirar(tipo, alvo):
     
     cargos = [danofront, danotorp, danoaae]
     dano = ajustedano(tipo)
-    if inimigos.get(f"Inimigo {alvo+1}").get("marcado"): dano -= cargos[tipo]
-    alvo = f"i{alvo+1}"
+    #if inimigos.get(f"Inimigo {alvo+1}").get("marcado"): dano += cargos[tipo]
+    alvo = f"Inimigo {alvo+1}"
     if alvo in inimigos and isinstance(dano, (int, float)):
         inimigos[alvo]["hp"] -= dano
         if inimigos[alvo]["hp"] <= 0: inimigos.pop(alvo)
@@ -977,8 +1009,46 @@ def procurar_ponto_fraco(alvo, cargo):
     for stat in stats:
         stat[9] += bonus
 
-avançar_nave(55)
-avançar_inimigos()
+
+def menuconfirm(cargo):
+    #x,y = stdscr.getmaxyx()
+    #stdscr.addstr(y//2-1, x//2-len("Confirmar Ações?"), "Confirmar Ações?")
+    opt("Sim", action = lambda s: force_confirm(cargo)),
+    opt("Não", action = lambda s: BACK),
+
+def energia(modo_energia):
+    if type(modo_energia) not in (int, str): return "Modo Invalido" 
+    ajuste = rolar(utilitarios)
+    if ajuste == "FAIL": return stdscr.addstr(x//2, y//2, "Tripulante falhou no teste. Tente novamente.")
+    utilitarios[9] += 1
+    if ajuste in ("MEDIO", "HARD"): setfoo('utilbonus', 1)  
+    if ajuste == "HARD": utilitarios[9] += 1
+    add_buffer(4, 1, modo_energia%6, 2, 0)
+
+def acelerar(cargo):
+    teste = rolar()
+
+def trocar_marcha(cargo):
+    #teste de pilotagem determina quantas marchas pode trocar nessa rod e pode dar buffs. Falha arrisca fritar motor.
+    #motorestavel: n/2 chance (n é o valor da variavel) de voltar pra marcha 1 ao inves de fritar
+    x,y = stdscr.getmaxyx()
+    resultado = teste(pilotagem)
+    if resultado == "FAIL": 
+        riscomotor[9], trocaspermitidas, motorestavel == 1, 0, 0
+        stdscr.addstr(y//2, x//2, "Tripulante falhou no teste. Tente novamente.")
+        stdscr.getch()
+        return BACK
+    if resultado == "EASY": 
+        trocaspermitidas, motorestavel == 1, 0
+    elif resultado == "MEDIO": 
+        trocaspermitidas, equilibrio[9], motorestavel = 1,1,1
+    elif resultado == "HARD": 
+        trocaspermitidas, equilibrio[9], motorestavel = 2,2,2
+    
+    k = max(1,j) if 1 >= j else min(5,j) if j>=5 else j
+    f['marcha_atual'] = marchas[k]
+
+
 
 # ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
 MENU = [opt("Piloto", submenu=[
@@ -990,9 +1060,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Ajudar Engenheiro"), 
         opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(0, 0)
             ),
-        opt("Confirmar Ações", submenu=[
-            opt("Sim", action = lambda s: force_confirm(0)),
-            opt("Não", action = lambda s: BACK),]),
+        opt("Confirmar Ações", submenu = lambda: menuconfirm(0)),
         opt("Voltar", action = lambda s: BACK),
         ]),
 
@@ -1005,9 +1073,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Ajudar Engenheiro"),
         opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(1, 0)
             ),
-        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-            opt("Sim", action = lambda s: force_confirm(1)),
-            opt("Não", action = lambda s: BACK),]),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(1)),
         opt("Voltar", action = lambda s: BACK)]),
 
     opt("Engenheiro", submenu=[
@@ -1020,11 +1086,15 @@ MENU = [opt("Piloto", submenu=[
             opt("Terminar", action = lambda s: terminar_util(2))
         ]),
         opt("Deslocar", action=lambda s: None),
-        opt("Interagir", action=lambda s: None),
-        opt("Confirmar Ações", submenu=[
-        opt("Sim", action = lambda s: force_confirm(2)),
-        opt("Não", action = lambda s: BACK),
-        ]),
+        opt("Abrir Painel de Energia", submenu=[
+            opt("Distribuição Padrão", action = lambda s: energia(1)),
+            opt("Divergir Para Escudos", action = lambda s: energia(2)),
+            opt("Divergir Para Propulsores", action = lambda s: energia(3)),
+            opt("Divergir Para Torretas", action = lambda s: energia(4)),
+            opt("Divergir Para Utilitários", action = lambda s: energia(5)),
+
+            ]),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(2)),
         opt("Voltar",        action=lambda s: BACK),
     ]),   
 
@@ -1037,28 +1107,22 @@ MENU = [opt("Piloto", submenu=[
             opt("Ajustar Criogenia", action=lambda s: ajustar_util("crio")),
             opt("Voltar", action = lambda s: BACK),
         ]),
-        opt("Abrir Painel de Comunicações", submenu=[
-            opt("Interceptar Comms Inimigas", action=lambda s: None),
-            opt("Enviar Mensagem", action=lambda s: None),
-            opt("Sabotar Comms Inimigas", action=lambda s: None),
-            opt("Voltar", action = lambda s: BACK),
-        ]),
-        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = lambda s: force_confirm(3)),
-        opt("Não", action = lambda s: BACK),
-        ]),
+        #opt("Abrir Painel de Comunicações", submenu=[
+        #    opt("Interceptar Comms Inimigas", action=lambda s: None),
+        #    opt("Enviar Mensagem", action=lambda s: None),
+        #    opt("Sabotar Comms Inimigas", action=lambda s: None),
+        #    opt("Voltar", action = lambda s: BACK),
+        #]),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(3)),
         opt("Voltar", action = lambda s: BACK),
     ]),
 
     opt("Atirador AAE", submenu=[
         opt("Atirar em um Inimigo",   submenu=lambda: listar_inimigos(4, 0)),
-        opt("Trocar Tipo de Munição", action=lambda s: None),
+        #opt("Trocar Tipo de Munição", action=lambda s: None),
         opt("Procurar Ponto Fraco",   submenu=lambda: listar_inimigos(4, 0)),
         opt("Levantar",               action=lambda s: None),
-        opt("Confirmar Ações",        action=confirmar_acoes, submenu=[
-        opt("Sim", action = force_confirm(4)),
-        opt("Não", action = lambda s: BACK),
-        ]),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(4)),
         opt("Voltar", action = lambda s: BACK),
     ]),
 
