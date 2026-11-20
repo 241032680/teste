@@ -51,6 +51,7 @@ def lcg(Xn, a, c, m, n):
         Xn = (a * Xn + c) % m
         resultados.append(Xn)
     return resultados
+
 def rand():
     rand = r['z']
     index = r['a']
@@ -177,8 +178,6 @@ setrand('b', 67)
 setrand('z', 1)
 
 #controles de jogo/placeholders/modificadores
-setfoo('turnos', 1)
-setfoo('rods', 1)
 setfoo('gameon', True)
 setfoo('gamewin', 0)
 setfoo('foo', 1)
@@ -368,7 +367,7 @@ def atualizar_stats():
 
     #velocidade real
     marchas[0] = 0 if f['marcha_atual'] == 5 else 1
-    setfoo('velreal', getstat(velmax) - marchas[-(f['marcha_atual'])])
+    setfoo('velreal', max(getstat(velmax) - marchas[-(f['marcha_atual']) ], 0))
 
 def setmodo(modo):
     modoativo[0] = modo if modo in MODOS else 1
@@ -673,8 +672,6 @@ for x in range(1, 19):
 #print(armazém)
 #print(len(armazém)) 
 
-setfoo('turnosatuais', 0)
-
 #print(inimigos["i1"])
 
 #testes de DT
@@ -723,7 +720,6 @@ def avançar_nave(vel):
     map[x] = '0'
     map[x+vel] = 'X'
 
-
 def mapsplit():
     map_segs = []
     for z in range(0, 10): map_segs.append(map[(10*z):((10*z)+10)])
@@ -733,6 +729,7 @@ def avançar_inimigos():
     numinimigos = len(inimigos)
     for n in range(1, numinimigos+1):
         inimigospot = inimigos.get(f"Inimigo {n}").get("posmapa")
+        if map[inimigospot] == 'X': inimigospot+=1
         map[inimigospot] = "I"
 
 #espaguete extremo. Curses é amaldiçoado. Metade eu entendo, metade é magia, tive que usar o gpt pra
@@ -743,7 +740,7 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
 #sentinels
-EXIT = object()   # propagates up → quit
+
 BACK = object()   # close this level, return to parent
 
 #data model
@@ -752,12 +749,7 @@ class opt:
     label:   str
     submenu: List["opt"]   = field(default_factory=list)
     action:  Optional[Callable] = None   # (stdscr) → EXIT | BACK | None
-
-#micro action
-def exit_action(_): return EXIT
-def back_action(_): 
-    if f['turnosatuais'] == 3: 
-        return BACK 
+    depth:   int = 0
 
 def status_nave():
     return ["STATUS DA NAVE",
@@ -770,7 +762,8 @@ def status_nave():
         f"Criogenia: {'Ligada' if crio[0] and not f['danocrio'] else 'Desligada'}",
         f"Sonar: {'Ligado' if sonar[0] else 'Desligado'}",
         f"Rádio: {'Ligado' if radio[0] and not f['danocomms'] else 'Desligado'}",
-        f"Gravidade: {'Ligada' if grav[0] and not f['danograv'] else 'Desligada'}"]
+        f"Gravidade: {'Ligada' if grav[0] and not f['danograv'] else 'Desligada'}",
+        f"Motor cabum? {f['falhamotor']}"] #debugar
 
 def mostrar_status(stdscr, items):
     largura = max(len(text) for text in items) + 2
@@ -834,7 +827,7 @@ menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
 def mostrar_inputs(stdscr, items):
     y, x = stdscr.getmaxyx()
     largura = max(len(text) for text in items) + 2
-    for i, text in enumerate(menu_inputs): stdscr.addstr((y//3)+i+2, 1, text)
+    for i, text in enumerate(menu_inputs): stdscr.addstr((y//3)+i+4, 1, text)
     stdscr.addstr(y//2, 1, f'y: {y} x: {x}')
     stdscr.refresh()
 
@@ -864,11 +857,11 @@ def cor(text):
     return curses.color_pair(cores.get(str(text).upper(), 0))
 
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
-    stdscr.clear()
+    #stdscr.clear()
+    global vertical
     vertical = 0
     h, w = stdscr.getmaxyx()
     draw_extras(stdscr)
-    if draw_extras: draw_extras(stdscr)
     gap = 2
     espaçamento = 1
     button_widths = [len(item.label) + (espaçamento * 2) for item in items]
@@ -886,7 +879,7 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.refresh()
 
 def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
-    stdscr.erase()
+    #stdscr.erase()
     h, w = stdscr.getmaxyx()
     if draw_extras: draw_extras(stdscr)
     for idx, item in enumerate(items):
@@ -901,6 +894,8 @@ def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
             stdscr.addstr(y, x, label)
     stdscr.refresh()
 
+current = 0
+depth = 0
 def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
     """
     layout="horizontal" → LEFT/RIGHT keys, box-buttons at the bottom.
@@ -909,40 +904,45 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
     draw_extras(stdscr) is painted before menu items on every redraw,
     so you can overlay text boxes, live game values, banners, etc.
     """
-    global vertical
-    vertical = 0
-    current  = 0
-    draw     = draw_menu_horizontal if layout == "horizontal" else draw_menu_vertical
-    vertical = 1 if draw == draw_menu_vertical else 0
-    key_prev = curses.KEY_LEFT  if layout == "horizontal" else curses.KEY_UP
-    key_next = curses.KEY_RIGHT if layout == "horizontal" else curses.KEY_DOWN
+    global vertical, current, depth
+    if layout == "horizontal":
+        draw, anterior, proximo, vertical = draw_menu_horizontal, curses.KEY_LEFT, curses.KEY_RIGHT, 0
+    elif layout == "vertical":
+        draw, anterior, proximo, vertical = draw_menu_vertical, curses.KEY_UP, curses.KEY_DOWN, 1
     draw(stdscr, items, current, draw_extras)
+    key, debugthing = stdscr.getch(), 1
     while True:
-        key = stdscr.getch()
-        if key == key_prev and current > 0:
+        if debugthing != 1: 
+            key = stdscr.getch()
+        if key == anterior and current > 0:
             current -= 1
-        elif key == key_next and current < len(items) - 1:
+        elif key == proximo and current < len(items) - 1:
             current += 1
+        
         elif key in (curses.KEY_ENTER, 10, 13):
             item = items[current]
             if item.submenu:
                 stdscr.clear()
                 submenu = item.submenu() if callable(item.submenu) else item.submenu
-                result = run_menu(stdscr, submenu, draw_extras=draw_extras) if submenu else BACK
-                if result == EXIT: return EXIT
-                # BACK from child → fall through, redraw this level
+                #depth +=1
+                if submenu: 
+                    result = run_menu(stdscr, submenu, draw_extras=draw_extras) 
+                else:
+                    BACK
             elif item.action:
                 result = item.action(stdscr)
-                if result == EXIT:
-                    stdscr.clear()
-                    return EXIT
                 if result == BACK:
+                    #if depth >0: depth -= 1
                     stdscr.clear()
                     return BACK
-                # None → stay, redraw this level
         elif key == 27:   # Escape → go up one level
+            item = items[current] 
+            if item.submenu and item.depth >1: stdscr.clear()
             return BACK
+        elif key == curses.KEY_F12:
+            return escape_seq()
         draw(stdscr, items, current, draw_extras)
+        debugthing = 0
 
 #game actions
 
@@ -960,8 +960,8 @@ def force_confirm(idxcargo):
 
 def ajustar_util(alvo):
     equipamentos = [crio, sonar, radio, grav]
-    #if equipamentos[alvo] not in equipamentos:
-    #    return False
+    if equipamentos[alvo] not in equipamentos:
+        return False
     equipamento = equipamentos[alvo]
     equipamento[0] = int(not equipamento[0])
     print(equipamento[0])
@@ -1011,10 +1011,10 @@ def procurar_ponto_fraco(alvo, cargo):
 
 
 def menuconfirm(cargo):
-    #x,y = stdscr.getmaxyx()
-    #stdscr.addstr(y//2-1, x//2-len("Confirmar Ações?"), "Confirmar Ações?")
-    opt("Sim", action = lambda s: force_confirm(cargo)),
-    opt("Não", action = lambda s: BACK),
+    mc = []
+    mc.append(opt("Sim", action = lambda s: force_confirm(cargo)))
+    mc.append(opt("Não", action = lambda s: BACK))
+    return mc
 
 def energia(modo_energia):
     if type(modo_energia) not in (int, str): return "Modo Invalido" 
@@ -1028,7 +1028,7 @@ def energia(modo_energia):
 def acelerar(cargo):
     teste = rolar()
 
-def trocar_marcha(cargo):
+def trocar_marcha(stdscr, cargo):
     #teste de pilotagem determina quantas marchas pode trocar nessa rod e pode dar buffs. Falha arrisca fritar motor.
     #motorestavel: n/2 chance (n é o valor da variavel) de voltar pra marcha 1 ao inves de fritar
     x,y = stdscr.getmaxyx()
@@ -1053,14 +1053,13 @@ def trocar_marcha(cargo):
 # ── Menu tree (only edit this to add new menus/submenus) ──────────────────────
 MENU = [opt("Piloto", submenu=[
         opt("Acelerar"),
-        opt("Trocar de Marcha"),
+        opt("Trocar de Marcha", action = lambda s: trocar_marcha(stdscr, 0)),
         opt("Manobrar"),
         opt("Navegar"),
         opt("Usar Utilitários"),
         opt("Ajudar Engenheiro"), 
-        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(0, 0)
-            ),
-        opt("Confirmar Ações", submenu = lambda: menuconfirm(0)),
+        opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(0, 0) ),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(0) ),
         opt("Voltar", action = lambda s: BACK),
         ]),
 
@@ -1073,7 +1072,7 @@ MENU = [opt("Piloto", submenu=[
         opt("Ajudar Engenheiro"),
         opt("Atirar em Inimigos", submenu=lambda: listar_inimigos(1, 0)
             ),
-        opt("Confirmar Ações", submenu= lambda: menuconfirm(1)),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(1) ),
         opt("Voltar", action = lambda s: BACK)]),
 
     opt("Engenheiro", submenu=[
@@ -1092,9 +1091,8 @@ MENU = [opt("Piloto", submenu=[
             opt("Divergir Para Propulsores", action = lambda s: energia(3)),
             opt("Divergir Para Torretas", action = lambda s: energia(4)),
             opt("Divergir Para Utilitários", action = lambda s: energia(5)),
-
-            ]),
-        opt("Confirmar Ações", submenu= lambda: menuconfirm(2)),
+            opt("Cancelar", action = lambda s: BACK)]),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(2) ),
         opt("Voltar",        action=lambda s: BACK),
     ]),   
 
@@ -1113,7 +1111,7 @@ MENU = [opt("Piloto", submenu=[
         #    opt("Sabotar Comms Inimigas", action=lambda s: None),
         #    opt("Voltar", action = lambda s: BACK),
         #]),
-        opt("Confirmar Ações", submenu= lambda: menuconfirm(3)),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(3) ),
         opt("Voltar", action = lambda s: BACK),
     ]),
 
@@ -1122,7 +1120,7 @@ MENU = [opt("Piloto", submenu=[
         #opt("Trocar Tipo de Munição", action=lambda s: None),
         opt("Procurar Ponto Fraco",   submenu=lambda: listar_inimigos(4, 0)),
         opt("Levantar",               action=lambda s: None),
-        opt("Confirmar Ações", submenu= lambda: menuconfirm(4)),
+        opt("Confirmar Ações", submenu= lambda: menuconfirm(4) ),
         opt("Voltar", action = lambda s: BACK),
     ]),
 
@@ -1148,13 +1146,5 @@ if __name__ == '__main__':
     while f['gameon'] == 1:
         if f['foo'] > 1 or f['foo'] <= 0: setfoo('foo', 1)
         if f['gamewin'] == 1: setfoo('gameon', 0)
-        if f['turnosatuais'] <3:
-            setfoo('turnos', f['turnos']+1)
-            #[coisas dentro do turno]
-            setfoo('turnosatuais', f['turnosatuais'] + 1)
-        setfoo('rods', f['rods']+1)
         curses.wrapper(main)
-        if f['turnosatuais'] >= 3: #fecha a rodada após três ações
-            eor() #processa danos contínuos e atualizações de fim de rodada
-            setfoo('rods', f['rods'] + 1) #conta rodadas completas
-            setfoo('turnosatuais', 0) #prepara a próxima rodada
+        #eor() #processa danos contínuos e atualizações de fim de rodada
