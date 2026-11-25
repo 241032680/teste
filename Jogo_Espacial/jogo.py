@@ -22,7 +22,7 @@ def getstat(stat):
         return int(sum(stat) - stat[15])
 
 def initstat(n):
-    return array.array('b', [0]*15 + [n]) #o ultimo valor do array é o identificador
+    return array.array('h', [0]*15 + [n]) #o ultimo valor do array é o identificador
 
 def timer(frames):
     while frames:
@@ -311,6 +311,66 @@ def confirmar_acoes(cargo):
         elif args[0] == 3: procurar_ponto_fraco()
         elif args[0] == 4: setmodo(args[2])
         max(ações_cargo[args[3]] - int(args[1]), 0)
+
+#criar personagens individuais
+def criar_personagem(cargo):
+    glob = globals()
+    g = glob.copy()
+    valoresindividuais = [x for x in g.values()]
+    chavesindividuais = [x for x in g.keys()]
+    for x in chavesindividuais: 
+        if chavesindividuais.index("pilotagem") != 0: 
+            chavesindividuais.pop(chavesindividuais.index("pilotagem")-1)
+        try: 
+            if chavesindividuais.index("stats"): chavesindividuais.pop()
+        except: 
+            continue
+    for items in ('__name__', '__doc__', '__package__', '__loader__', '__spec__', '__annotations__'): 
+        chavesindividuais.remove(items) 
+    
+    identificadores = [stats[i][15] for i, j in enumerate(stats)]
+    #return 0
+
+    #for y,x in enumerate(valoresindividuais):
+    #    #print(f'x: {x}, type: {type(x)}')
+    #    #if type(x) != array.array: valoresindividuais.remove(x) 
+    #    try: valoresindividuais[y][15] in identificadores
+    #    except:
+    #        valoresindividuais.remove(x)
+    #    else: 
+    #        try: 
+    #            if type(x) != array.array or type == function: valoresindividuais.pop(y)
+    #            print(f'\n {valoresindividuais}')
+    #        except:
+    #            print("acaca")
+    #try:
+    #    print(valoresindividuais[0][15])
+    #except:
+    #    print(valoresindividuais)
+    #print(chavesindividuais[15])
+    
+    #print(valoresindividuais)
+
+    #for x, stat in enumerate(stats):
+    #    if type(valoresindividuais[x]) == array.array: print((valoresindividuais[x][15]))
+    #    print(x, stat)
+    #    free_identificador = max(stat[15] for stat in stats)
+    #    ski = exec(f'{chavesindividuais[f'{23-x}']}_{cargo} = initstat({free_identificador})')
+    #    stats.append(ski)
+    #    print(stats)
+    
+
+    #    rando = abs((rand()%3) + (sin(rand())*4))
+    #    statsindividuais[f'{stat}_{cargo}'] = rando
+    #    #print(f'\n {statsindividuais}')
+    #    statsindividuais[f'stat_{cargo}'].append(rando)
+    #    #print(f'\n {statsindividuais}')
+    #print(f'\n {statsindividuais}')
+
+
+print(criar_personagem('piloto'))
+#criar_personagem('piloto')
+#print(mira_piloto)
 
 #eor
 def atualizar_stats():
@@ -904,7 +964,7 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
     draw_extras(stdscr) is painted before menu items on every redraw,
     so you can overlay text boxes, live game values, banners, etc.
     """
-    global vertical, current, depth
+    global vertical, current #depth
     if layout == "horizontal":
         draw, anterior, proximo, vertical = draw_menu_horizontal, curses.KEY_LEFT, curses.KEY_RIGHT, 0
     elif layout == "vertical":
@@ -1141,6 +1201,8 @@ def main(stdscr):
     run_menu(stdscr, MENU, layout="horizontal", draw_extras=draw_extras)
     # To add game-state overlays to the top layer:
     # run_menu(stdscr, MENU, layout="horizontal", draw_extras=my_hud_fn)
+
+f['gameon'] = 0
 
 if __name__ == '__main__':
     while f['gameon'] == 1:

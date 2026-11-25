@@ -2,3 +2,5 @@
 01: ajuste individual utilitários (0 ações)
 02: ajuste total utilitários (1 ação)
 03: procurar pontos fracos (1 ação)
+04: setmodo energia (1 ação)
+
