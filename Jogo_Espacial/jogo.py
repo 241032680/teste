@@ -322,7 +322,8 @@ def criar_personagem(cargo):
         try:
             if type(x) == tuple:
                 try:
-                    if type(g[i][1]) not in (str, int, dict, list) and len(g[i][1]) > 15: indi.append(x)  
+                    if type(g[i][1]) not in (str, int, dict, list) and len(g[i][1])>15 and g[i][1][15] in range(22, 62): indi.append(x)
+                        #print("opa", end="|")
                 except:
                     continue
         except: 
@@ -338,6 +339,7 @@ def criar_personagem(cargo):
         elif o in ger: ger.append(free_identificador) 
         elif o in nav: nav.append(free_identificador) 
         elif o in com: com.append(free_identificador)
+
 criar_personagem('piloto')
 criar_personagem('copiloto')
 criar_personagem('engenheiro')
@@ -724,15 +726,23 @@ bonus_cargo = {
 dts = [(10,12,14), (11,14,18), (12,16,21), (13,18,24), (18,26,36)]
 
 def rolar(teste, cargo):
-    exec(f'{base} = {teste}_{cargo}[0]', globals())
+    try:
+        exec(f'base = getstat({teste}_{cargo})', globals())
+    except:
+        base = getstat(teste)
+        print("deu ruim")
     if teste[15] in mob:
         base += mobilidade[0]
+        exec(f'base += mobilidade_{cargo}[0]')
     elif teste[15] in ger:
         base += geral[0]
+        exec(f'base += geral_{cargo}[0]')
     elif teste[15] in com:
         base += combate[0]
+        exec(f'base += combate_{cargo}[0]')
     elif teste[15] in nav:
         base += nave[0]
+        exec(f'base += nave_{cargo}[0]')
     level = min(max(base // 5, 0), 4)
     dice = (6,8,10,12,20)[level]
     dados = [rand() % dice + 1 for _ in range(3)]
@@ -742,11 +752,11 @@ def rolar(teste, cargo):
     total = sum(dados) + base % 5 + getstat(teste) - base + bonus_extra
     facil, medio, dificil = dts[level]
     return 'FAIL' if total < facil else 'EASY' if total < medio else 'MEDIO' if total < dificil else "HARD"
-        
+
+print(rolar(mira, 'piloto'))
 #print(rolar(comunicaçao, 'engenheiro'))
 
 map = ['X'] + ['0']*98 + ['D']
-
 def avançar_nave(vel):
     x = map.index('X')
     map[x] = '0'
@@ -763,6 +773,7 @@ def avançar_inimigos():
         inimigospot = inimigos.get(f"Inimigo {n}").get("posmapa")
         if map[inimigospot] == 'X': inimigospot+=1
         map[inimigospot] = "I"
+
 
 #espaguete extremo. Curses é amaldiçoado. Metade eu entendo, metade é magia, tive que usar o gpt pra
 #criar essas viagem de sentinela e submenu pq n deu nao mto dificil fazer o pc desenhar
@@ -855,7 +866,7 @@ def mostrar_inimigos(stdscr, items):
     if duas_colunas: stdscr.addstr(k+2, w-2, "└" + "─" * (largura+((largura)//2)+2) + "┘")
 
 
-menu_inputs = ["Q: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
+menu_inputs = ["F1: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
 def mostrar_inputs(stdscr, items):
     y, x = stdscr.getmaxyx()
     largura = max(len(text) for text in items) + 2
