@@ -314,63 +314,32 @@ def confirmar_acoes(cargo):
 
 #criar personagens individuais
 def criar_personagem(cargo):
-    glob = globals()
-    g = glob.copy()
-    valoresindividuais = [x for x in g.values()]
-    chavesindividuais = [x for x in g.keys()]
-    for x in chavesindividuais: 
-        if chavesindividuais.index("pilotagem") != 0: 
-            chavesindividuais.pop(chavesindividuais.index("pilotagem")-1)
-        try: 
-            if chavesindividuais.index("stats"): chavesindividuais.pop()
+    global stats
+    g = [x for x in globals().items()]
+    indi = []
+    exec(f'stats_{cargo} = []', globals())
+    for i, x in enumerate(g):
+        try:
+            if type(x) == tuple:
+                try:
+                    if type(g[i][1]) not in (str, int, dict, list) and len(g[i][1]) > 15: indi.append(x)  
+                except:
+                    continue
         except: 
             continue
-    for items in ('__name__', '__doc__', '__package__', '__loader__', '__spec__', '__annotations__'): 
-        chavesindividuais.remove(items) 
-    
-    identificadores = [stats[i][15] for i, j in enumerate(stats)]
-    #return 0
+    for o, x in enumerate(indi):
+        free_identificador = max(stat[15] for stat in stats) + 1
+        exec(f'{indi[o][0]}_{cargo} = initstat({free_identificador})', globals())
+        rando = abs((rand()%3) + (sin(rand())*4))
+        exec(f'{indi[o][0]}_{cargo}[0] = {int(rando)}', globals())
+        exec(f'stats_{cargo}.append({indi[o][0]}_{cargo})', globals())
+        exec(f'stats.append({indi[o][0]}_{cargo})', globals())
 
-    #for y,x in enumerate(valoresindividuais):
-    #    #print(f'x: {x}, type: {type(x)}')
-    #    #if type(x) != array.array: valoresindividuais.remove(x) 
-    #    try: valoresindividuais[y][15] in identificadores
-    #    except:
-    #        valoresindividuais.remove(x)
-    #    else: 
-    #        try: 
-    #            if type(x) != array.array or type == function: valoresindividuais.pop(y)
-    #            print(f'\n {valoresindividuais}')
-    #        except:
-    #            print("acaca")
-    #try:
-    #    print(valoresindividuais[0][15])
-    #except:
-    #    print(valoresindividuais)
-    #print(chavesindividuais[15])
-    
-    #print(valoresindividuais)
-
-    #for x, stat in enumerate(stats):
-    #    if type(valoresindividuais[x]) == array.array: print((valoresindividuais[x][15]))
-    #    print(x, stat)
-    #    free_identificador = max(stat[15] for stat in stats)
-    #    ski = exec(f'{chavesindividuais[f'{23-x}']}_{cargo} = initstat({free_identificador})')
-    #    stats.append(ski)
-    #    print(stats)
-    
-
-    #    rando = abs((rand()%3) + (sin(rand())*4))
-    #    statsindividuais[f'{stat}_{cargo}'] = rando
-    #    #print(f'\n {statsindividuais}')
-    #    statsindividuais[f'stat_{cargo}'].append(rando)
-    #    #print(f'\n {statsindividuais}')
-    #print(f'\n {statsindividuais}')
-
-
-print(criar_personagem('piloto'))
-#criar_personagem('piloto')
-#print(mira_piloto)
+criar_personagem('piloto')
+criar_personagem('copiloto')
+criar_personagem('engenheiro')
+criar_personagem('atirador')
+criar_personagem('aae')
 
 #eor
 def atualizar_stats():
