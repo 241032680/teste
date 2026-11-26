@@ -251,14 +251,15 @@ def add_buffer(*componentes):
     #--
     #Byte 1: Ação
     #6 bits: ação (0-63; 1-64)
-    #2 bits: custo de ações (0-3; 1-4)
+    #2 bits: custo de ações (0-3)
     #--
     #Byte 2: Interagíveis
     #4 bits: alvo (0-15; 1-16)
     #3 bits: cargo (0-7; 1-8)
     #1 bit: booleano "continuar próxima rodada" (0-1)
     #mascara pq a bosta do python fica cortando os zeros frontais
-    if len(componentes) < 5 and len(componentes)>0:
+    if not 1 <= len(componentes) <= 5: return False #pacote inválido
+    if len(componentes) < 5:
         ação = componentes[0]
         custo = componentes[1] if len(componentes) >=2 else 1
         alvo = componentes[2] if len(componentes) >=3 else 0
@@ -266,8 +267,11 @@ def add_buffer(*componentes):
         prox = 0
     if len(componentes) >= 5:
         ação, custo, alvo, cargo, prox = componentes[0], componentes[1], componentes[2], componentes[3], componentes[4]
-    pacote = array.array('H', [((ação&0x4f)<<2 |(custo&0x3))<<8 | ((alvo&0xf)<<4 |(cargo&0x7)<<1 |(prox&0x1))])
+    if not all(isinstance(n, int) for n in (ação,custo,alvo,cargo,prox)): return False
+    if not (0 <= ação <= 63 and 0 <= custo <= 3 and 0 <= alvo <= 15 and 0 <= cargo < 5 and prox in (0,1)): return False
+    pacote = array.array('H', [((ação&0x3f)<<2 |(custo&0x3))<<8 | ((alvo&0xf)<<4 |(cargo&0x7)<<1 |(prox&0x1))])
     buffer.extend(pacote)
+    ações_virtuais[:] = calcular_acoes_virtuais(buffer, ações_cargo) #reserva visual
     return buffer
 
 def listar_pacotes():
@@ -284,8 +288,13 @@ def read_buffer(pos):
         Prox = (unpack)       & 0x01 #0000 0001
         return [Ação, Custo, Alvo, Cargo, Prox]
 
+cargos = ("piloto", "copiloto", "engenheiro", "atirador", "aae")
 ações_cargo=[3,3,3,3,3]
-ações_virtuais = ações_cargo.copy() #pra display
+ações_virtuais = ações_cargo.copy() #deve chamar ou criar um draw_extras que desenha um numero ao lado do painel de status
+#demonstrando a diferença que uma alteração vai fazer. 
+#Ex: velmax 7, se mudar de modo fizer ser 6, escrever "-1" ao lado de velmax 7 até que
+#o player confirme a decisão ou mude o modificador. 
+#Esse drawextras também deve mostrar a quantidade de escolhas/ações restantes.
 
 def calcular_acoes_virtuais(buffer, ações_cargo):
     virtuais = ações_cargo.copy()
@@ -301,16 +310,26 @@ def calcular_acoes_virtuais(buffer, ações_cargo):
             print(f"Cargo Invalido {{{cargo}({cg})}} in buffer {x}: {{{pacote};{bpkt}}}")
     return virtuais
 
-def confirmar_acoes(cargo):
-    if cargo not in ("piloto", "copiloto", "engenheiro", "atirador", "aae"): return print("Cargo Invalido")
-    for x in range(0, len(buffer)):
-        args = read_buffer(x)
-        if args[0] == 0: atirar(args[3], args[2])
-        elif args[0] == 1: ajustar_util(args[2])
-        elif args[0] == 2: ações_cargo[args[3]] - 1
-        elif args[0] == 3: procurar_ponto_fraco()
-        elif args[0] == 4: setmodo(args[2])
-        max(ações_cargo[args[3]] - int(args[1]), 0)
+def confirmar_acoes(cargo=None):
+    if cargo is not None and cargo not in cargos: return False
+    x = 0
+    while x < len(buffer):
+        ação, custo, alvo, idxcargo, prox = read_buffer(x)
+        if ação == 2: custo = max(custo, 1)
+        if (cargo is not None and cargos[idxcargo] != cargo) or custo > ações_cargo[idxcargo]:
+            x += 1
+            continue
+        if ação == 0: atirar((0,0,None,2,3)[idxcargo], alvo) #arma por cargo
+        elif ação == 1: ajustar_util(alvo)
+        elif ação == 2: pass #custo do painel
+        elif ação == 3: procurar_ponto_fraco(alvo, cargos[idxcargo])
+        elif ação == 4: energia(alvo, cargos[idxcargo], confirmar=True)
+        else:
+            x += 1
+            continue
+        ações_cargo[idxcargo] = max(ações_cargo[idxcargo] - custo, 0)
+        buffer.pop(x)
+    ações_virtuais[:] = calcular_acoes_virtuais(buffer, ações_cargo)
 
 #criar personagens individuais
 def criar_personagem(cargo):
@@ -335,10 +354,10 @@ def criar_personagem(cargo):
         exec(f'{indi[o][0]}_{cargo}[0] = {int(rando)}', globals())
         exec(f'stats_{cargo}.append({indi[o][0]}_{cargo})', globals())
         exec(f'stats.append({indi[o][0]}_{cargo})', globals())
-        if o in mob: mob.append(free_identificador)
-        elif o in ger: ger.append(free_identificador) 
-        elif o in nav: nav.append(free_identificador) 
-        elif o in com: com.append(free_identificador)
+        if x[1][15] in mob: mob.append(free_identificador)
+        elif x[1][15] in ger: ger.append(free_identificador) 
+        elif x[1][15] in nav: nav.append(free_identificador) 
+        elif x[1][15] in com: com.append(free_identificador)
 
 criar_personagem('piloto')
 criar_personagem('copiloto')
@@ -396,9 +415,7 @@ def atualizar_stats():
     f['podeusarcomms'] = bool(radioativo)
     f['hangarselado'] = f['danohangar'] and depressurização[0] == 0
 
-    # ações virtuais
-    ações_virtuais[:] = calcular_acoes_virtuais(buffer, ações_cargo)
-
+   
     #velocidade real
     marchas[0] = 0 if f['marcha_atual'] == 5 else 1
     setfoo('velreal', max(getstat(velmax) - marchas[-(f['marcha_atual']) ], 0))
@@ -557,7 +574,7 @@ def consertar(lugar):
         f['rodssemgrav'] = 0
     elif lugar == 'crio' and f['hitcrio']:
         f['hitcrio'] -= 1
-    elif lugar == 'geradorescudo':
+    elif lugar == 'geradorescudo' and not f['genescudo']:
         f['genescudo'] = True
         f['riscoverclock'] = 0
         f['escudoefetivof'] = escudof[0]
@@ -570,10 +587,11 @@ def consertar(lugar):
     elif lugar == 'hangar' and f['danohangar']:
         f['danohangar'] = False
         depressurização[0] = 3
-    elif lugar in ('armazém','medbay','cozinha'):
+    elif lugar in ('armazém','medbay','cozinha') and f['dano' + lugar]:
         f['dano' + lugar] = False
     elif lugar in quartos:
         _, estado, _ = quartos[lugar]
+        if not f[estado]: return False
         f[estado] = False
     else:
         return False
@@ -598,12 +616,7 @@ def danos():
     else:
         f['criodesmaio'] = min(5, f['criodesmaio'] + 1)
     if f['falhamotor']: f['rodsfalhamotor'] += 1
-    if f['danopropulsores']:
-        if f['novoprop'] == 1 and f['numprops'] < 9:
-            setfoo('numprops', min(f['numprops'] + 1, 9)) #corrigido: respeita a capacidade máxima
-            print('Um novo propulsor foi danificado!')
-            setfoo('novoprop', 0)
-        print("Propulsores danificados!")
+    if f['danopropulsores']: mensagens.append('Propulsores danificados!')
 
     depressurizacao_restante = depressurização[0]
     if f['danohangar']:
@@ -649,57 +662,37 @@ def eor():
     avançar_nave(f['velreal'])
     avançar_inimigos()
 
-    for stat in stats: stat[9] = 0
+    for stat in stats + [hp, escudo, velmax, escudof, escudot, numtorpedos, numaae, numfrontal, danotorp, danoaae, danofront, riscomotor]: stat[9] = 0
+    for inimigo in inimigos.values(): inimigo["marcado"] = False #fim do bônus da rodada
     return mensagens
 
 #inimigo
 
-def criarinimigo(tipo):
+inimigos = {}
+proximo_inimigo = 0 #id permanente no buffer
+def criarinimigo(tipo, posmapa=None):
+    global proximo_inimigo
     qtmissel =   3 if tipo=="medio" else 4    if tipo=="pesado" else 2
     qthp =      40 if tipo=="medio" else 80   if tipo=="pesado" else 0
     qtesc =      5 if tipo=="medio" else 10   if tipo=="pesado" else 0
     v =       4.56 if tipo=="medio" else 6.66 if tipo=="pesado" else 1.5
     s =          5 if tipo=="medio" else 4    if tipo=="pesado" else 6
-    if len(inimigos) > 10: return 0
-    n = len(inimigos)
+    if len(inimigos) > 10 or proximo_inimigo > 15: return 0
+    n = proximo_inimigo
+    proximo_inimigo += 1
     inimigos[f'Inimigo {(n+1)}'] = {
     "tipo" : tipo,
     "hp" : int(30 + qthp + float(((sin(rand())) * 6.66))),
     "velocidade": int(s),
     "mísseis" : int(rand()%qtmissel + sin(rand())),
     "escudo": int((10 + qtesc + (sin(rand()) * v)) * ((sin(rand()) + 1.5)//2.2)),
-    "posmapa": int((rand()%36)+(sin(rand())*20)),
+    "posmapa": max(0, int((rand()%36)+(sin(rand())*20))) if posmapa is None else posmapa,
     "marcado": False
     }
 
-i1 = {
-    "tipo de inimigo": "leve",
-    "hp" : int((30 + (sin(rand())) * 6.66)),
-    "velocidade": 6,
-    "mísseis" : int(rand()%3 + sin(rand())),
-    "escudo": int((10 + (sin(rand()) * 1.5)) * ((sin(rand()) + 1.5)//2.2)),
-    "posmapa": 6,
-    "marcado": False,
-    #"tipo de missel": tipomissel(),
-    #"tipo de escudo": tipoescudo(),
-    #"tipo de dano": tipodano()
-    }
-
-i2 = {"tipo" : "medio", 
-"hp" : int(30 + 40 + float(((sin(rand())) * 6.66))),
-"escudo": int((10 + 5 + (sin(rand()) * 4.56)) * ((sin(rand()) + 1.5)//2.2)),
-"posmapa": 86,
-"marcado": False}
-
-i3 = {"tipo" : "pesado",
-"hp" : int(30 + 80 + float(((sin(rand())) * 6.66))),
-"escudo": int((10 + 10 + (sin(rand()) * 6.66)) * ((sin(rand()) + 1.5)//2.2)),
-"posmapa": 16,
-"marcado": False}
-
-inimigos = {"Inimigo 1" : i1,
-"Inimigo 2" : i2,
-"Inimigo 3" : i3} 
+criarinimigo("leve", rand()%20)
+criarinimigo("medio", rand()%20)
+criarinimigo("pesado", rand()%20)
 
 for x in range(1, 19):
     additem(armazém, str(x), rand()%90)
@@ -726,30 +719,26 @@ bonus_cargo = {
 dts = [(10,12,14), (11,14,18), (12,16,21), (13,18,24), (18,26,36)]
 
 def rolar(teste, cargo):
-    try:
-        exec(f'base = getstat({teste}_{cargo})', globals())
-    except:
-        base = getstat(teste)
-        print("deu ruim")
-    if teste[15] in mob:
-        base += mobilidade[0]
-        exec(f'base += mobilidade_{cargo}[0]')
-    elif teste[15] in ger:
-        base += geral[0]
-        exec(f'base += geral_{cargo}[0]')
-    elif teste[15] in com:
-        base += combate[0]
-        exec(f'base += combate_{cargo}[0]')
-    elif teste[15] in nav:
-        base += nave[0]
-        exec(f'base += nave_{cargo}[0]')
+    if cargo not in cargos: return 'FAIL'
+    nome = next((nome for nome, stat in globals().items() if stat is teste), None)
+    pessoal = globals().get(f'{nome}_{cargo}', teste) #atributo individual
+    base = pessoal[0]
+    compartilhado = teste[0]
+    if teste[15] in mob: categoria, individual = mobilidade, globals()[f'mobilidade_{cargo}']
+    elif teste[15] in ger: categoria, individual = geral, globals()[f'geral_{cargo}']
+    elif teste[15] in com: categoria, individual = combate, globals()[f'combate_{cargo}']
+    elif teste[15] in nav: categoria, individual = nave, globals()[f'nave_{cargo}']
+    else: categoria, individual = None, None
+    if categoria is not None:
+        base += individual[0]
+        compartilhado += categoria[0]
     level = min(max(base // 5, 0), 4)
     dice = (6,8,10,12,20)[level]
     dados = [rand() % dice + 1 for _ in range(3)]
     if sum(dados) == dice * 3: return 'CRIT'
     bonus_cargo_atual = bonus_cargo.get(cargo, {}).get(teste[15], 0)
     bonus_extra = bonus_cargo_atual - teste[8]
-    total = sum(dados) + base % 5 + getstat(teste) - base + bonus_extra
+    total = sum(dados) + base % 5 + getstat(teste) - compartilhado + bonus_extra
     facil, medio, dificil = dts[level]
     return 'FAIL' if total < facil else 'EASY' if total < medio else 'MEDIO' if total < dificil else "HARD"
 
@@ -768,15 +757,9 @@ def mapsplit():
     return map_segs
 
 def avançar_inimigos():
-    numinimigos = len(inimigos)
-    for n in range(1, numinimigos+1):
-        inimigospot = inimigos.get(f"Inimigo {n}").get("posmapa")
-        if map[inimigospot] == 'X': inimigospot+=1
-        map[inimigospot] = "I"
-
-
-#espaguete extremo. Curses é amaldiçoado. Metade eu entendo, metade é magia, tive que usar o gpt pra
-#criar essas viagem de sentinela e submenu pq n deu nao mto dificil fazer o pc desenhar
+    for inimigo in inimigos.values():
+        inimigospot = inimigo["posmapa"]
+        if map[inimigospot] not in ('X','D'): map[inimigospot] = "I"
 
 import curses
 from dataclasses import dataclass, field
@@ -815,7 +798,6 @@ def mostrar_status(stdscr, items):
     stdscr.addstr(1, x, "┌" + "─" * largura + "┐")
     for i, text in enumerate(items): stdscr.addstr(2 + i, x, "│ " + text.ljust(largura - 2) + " │")
     stdscr.addstr(2 + len(items), x, "└" + "─" * largura + "┘")
-    stdscr.refresh()
 
 #pra testar, vai ser função dedicada depois
 criarinimigo("leve")
@@ -824,19 +806,14 @@ criarinimigo("medio")
 criarinimigo("pesado")
 
 def mostrar_inimigos(stdscr, items):
+    if not items: return
     duas_colunas = bool(len(items)>6)
-    largura = max(len(key) for inimigo in items.values() for key in inimigo) + 2
+    largura = max(16, max(len(key) for inimigo in items.values() for key in inimigo) + 2)
     y, x = stdscr.getmaxyx()
     w = x +4 - largura*2
     j,k = 1,1
-    colunaum, colunadois = items.copy(), items.copy()
-    while len(colunaum) > 6:
-        colunaum.popitem()
-    for I in range(1, 7):
-        try:
-            colunadois.pop(f"Inimigo {I}")
-        except:
-            pass
+    colunaum = dict(list(items.items())[:6])
+    colunadois = dict(list(items.items())[6:])
     stdscr.addstr(j, w - (largura*duas_colunas*2), "┌" + "─" * (largura+((largura)//2)+2) + "┐")
     stdscr.addstr(j+1, w - (largura*duas_colunas*2), "│ ".ljust((largura-2)//2) + "INIMIGOS".center(largura-2) + " │".rjust((largura-2)//2))
     if duas_colunas:
@@ -850,7 +827,7 @@ def mostrar_inimigos(stdscr, items):
         stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f'|{tab}{alvo.ljust(larguratotal-len(tab), fillchar)}|')
         j += 1
         for key, value in inimigo.items():
-            if key != "posmapa" and key != "marcado":
+            if key not in ("marcado", "posmapa", "misseis", "velocidade"):
                 stdscr.addstr(2 + j, w - (largura*duas_colunas*2), f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
                 j += 1
     for nome, Inimigo in colunadois.items():
@@ -859,20 +836,19 @@ def mostrar_inimigos(stdscr, items):
         stdscr.addstr(2 + k, w-2, f'|{tab}{alvo.ljust(larguratotal-len(tab), fillchar)}|')
         k += 1
         for key, value in Inimigo.items():
-            if key != "posmapa" and key != "marcado":
+            if key not in ("marcado", "posmapa", "misseis", "velocidade"):
                 stdscr.addstr(2 + k, w-2, f"| {key.ljust(largura-2)} : {str(value).rjust((largura-2)//2)} |")
                 k +=1
     stdscr.addstr(j+2, w - (largura*duas_colunas*2), "└" + "─" * (largura+((largura)//2)+2) + "┘")
     if duas_colunas: stdscr.addstr(k+2, w-2, "└" + "─" * (largura+((largura)//2)+2) + "┘")
 
 
-menu_inputs = ["F1: Ver Tripulação", "SETAS: Mover", "ESC: Voltar"]
+menu_inputs = ["F12: Desligar Jogo", "SETAS: Mover", "ESC: Voltar"]
 def mostrar_inputs(stdscr, items):
     y, x = stdscr.getmaxyx()
     largura = max(len(text) for text in items) + 2
     for i, text in enumerate(menu_inputs): stdscr.addstr((y//3)+i+4, 1, text)
     stdscr.addstr(y//2, 1, f'y: {y} x: {x}')
-    stdscr.refresh()
 
 def mostrar_mapa(stdscr, items):
     y, h = stdscr.getmaxyx()
@@ -900,11 +876,11 @@ def cor(text):
     return curses.color_pair(cores.get(str(text).upper(), 0))
 
 def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
-    #stdscr.clear()
+    stdscr.erase()
     global vertical
     vertical = 0
     h, w = stdscr.getmaxyx()
-    draw_extras(stdscr)
+    if draw_extras: draw_extras(stdscr)
     gap = 2
     espaçamento = 1
     button_widths = [len(item.label) + (espaçamento * 2) for item in items]
@@ -922,7 +898,9 @@ def draw_menu_horizontal(stdscr, items, selected, draw_extras=None):
     stdscr.refresh()
 
 def draw_menu_vertical(stdscr, items, selected, draw_extras=None):
-    #stdscr.erase()
+    stdscr.erase()
+    global vertical
+    vertical = 1
     h, w = stdscr.getmaxyx()
     if draw_extras: draw_extras(stdscr)
     for idx, item in enumerate(items):
@@ -947,7 +925,8 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
     draw_extras(stdscr) is painted before menu items on every redraw,
     so you can overlay text boxes, live game values, banners, etc.
     """
-    global vertical, current #depth
+    global vertical
+    current = 0 #seleção local do menu
     if layout == "horizontal":
         draw, anterior, proximo, vertical = draw_menu_horizontal, curses.KEY_LEFT, curses.KEY_RIGHT, 0
     elif layout == "vertical":
@@ -961,7 +940,6 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
             current -= 1
         elif key == proximo and current < len(items) - 1:
             current += 1
-        
         elif key in (curses.KEY_ENTER, 10, 13):
             item = items[current]
             if item.submenu:
@@ -969,11 +947,13 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
                 submenu = item.submenu() if callable(item.submenu) else item.submenu
                 #depth +=1
                 if submenu: 
-                    result = run_menu(stdscr, submenu, draw_extras=draw_extras) 
+                    result = run_menu(stdscr, submenu, draw_extras=draw_extras)
+                    if not f['gameon']: return result
                 else:
-                    BACK
+                    return BACK
             elif item.action:
                 result = item.action(stdscr)
+                if not f['gameon']: return result
                 if result == BACK:
                     #if depth >0: depth -= 1
                     stdscr.clear()
@@ -982,17 +962,17 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
             item = items[current] 
             if item.submenu and item.depth >1: stdscr.clear()
             return BACK
-        elif key == curses.KEY_F12:
+        elif key == curses.KEY_F12 or (key == curses.KEY_DC and layout == "horizontal"):
             return escape_seq()
-        elif key == curses.KEY_F1:
-            return run_crew_menu
+        elif key == curses.KEY_F1 and "run_crew_menu" in globals():
+            run_crew_menu(stdscr)
         draw(stdscr, items, current, draw_extras)
         debugthing = 0
 
 #game actions
 
 
-def escape_seq():
+def escape_seq(stdscr=None):
     setfoo('gameon', 0)
     setfoo('gamewin', 1)
 
@@ -1005,8 +985,10 @@ def force_confirm(idxcargo):
 
 def ajustar_util(alvo):
     equipamentos = [crio, sonar, radio, grav]
-    if equipamentos[alvo] not in equipamentos:
-        return False
+    if isinstance(alvo, str):
+        if alvo not in ("crio", "sonar", "radio", "grav"): return False
+        alvo = ("crio", "sonar", "radio", "grav").index(alvo)
+    if not isinstance(alvo, int) or not 0 <= alvo < len(equipamentos): return False
     equipamento = equipamentos[alvo]
     equipamento[0] = int(not equipamento[0])
     print(equipamento[0])
@@ -1014,7 +996,8 @@ def ajustar_util(alvo):
     return True
 
 
-danofront[4] = 10
+#danofront[4] = 10
+
 def atirar(tipo, alvo):
     #atirar("front", i1)
     def ajustedano(tipo):
@@ -1029,33 +1012,34 @@ def atirar(tipo, alvo):
     #if inimigos.get(f"Inimigo {alvo+1}").get("marcado"): dano += cargos[tipo]
     alvo = f"Inimigo {alvo+1}"
     if alvo in inimigos and isinstance(dano, (int, float)):
-        inimigos[alvo]["hp"] -= dano
+        inimigos[alvo]["hp"] -= max(0, dano + int(inimigos[alvo]["marcado"])) #bônus do alvo
         if inimigos[alvo]["hp"] <= 0: inimigos.pop(alvo)
     else:
         return "Alvo Inválido"
 
-#print(inimigos)
-
-def listar_inimigos(cargo, opçao):
+def listar_inimigos(cargo, opçao, custo=2):
     #opçoes: 00 atirar; 03 procurar ptos fracos; 
     lista = []
-    for alvo, nome in enumerate(inimigos.keys()):
+    for nome in inimigos:
+        alvo = int(nome.split()[-1]) - 1
         if inimigos[nome]['hp'] > 0:
-            lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(opçao, 2, alvo, cargo, 0)),)
+            lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(opçao, custo, alvo, cargo, 0)),)
     lista.append(opt("Voltar", action = lambda s: BACK))
     return lista
 
 def terminar_util(cargo):
     prox = 1 if ações_cargo[cargo] <=1 else 0
-    add_buffer(2, 0, 1, cargo, prox)
+    add_buffer(2, 1, 1, cargo, prox)
     return BACK
 
 def procurar_ponto_fraco(alvo, cargo):
-    result = rolar(percepçao, "aae")
-    a,b,c = danoaae[9],danofront[9],danotorp[9]
-    bonus = 3 if result == "HARD" else 2 if result == "MEDIO" else 1
-    for stat in stats:
-        stat[9] += bonus
+    alvo = f"Inimigo {alvo+1}"
+    if alvo not in inimigos: return False
+    result = rolar(percepçao, cargo)
+    if result == "FAIL": return False
+    bonus = 3 if result in ("HARD", "CRIT") else 2 if result == "MEDIO" else 1
+    inimigos[alvo]["marcado"] = bonus
+    return True
 
 
 def menuconfirm(cargo):
@@ -1064,14 +1048,16 @@ def menuconfirm(cargo):
     mc.append(opt("Não", action = lambda s: BACK))
     return mc
 
-def energia(modo_energia):
-    if type(modo_energia) not in (int, str): return "Modo Invalido" 
-    ajuste = rolar(utilitarios)
-    if ajuste == "FAIL": return stdscr.addstr(x//2, y//2, "Tripulante falhou no teste. Tente novamente.")
+def energia(modo_energia, cargo="engenheiro", confirmar=False):
+    if not isinstance(modo_energia, int) or modo_energia not in MODOS: return False
+    if not confirmar: return add_buffer(4, 1, modo_energia, cargos.index(cargo), 0) #só reserva a escolha
+    ajuste = rolar(utilitarios, cargo)
+    if ajuste == "FAIL": return False
     utilitarios[9] += 1
-    if ajuste in ("MEDIO", "HARD"): setfoo('utilbonus', 1)  
-    if ajuste == "HARD": utilitarios[9] += 1
-    add_buffer(4, 1, modo_energia%6, 2, 0)
+    if ajuste in ("MEDIO", "HARD", "CRIT"): setfoo('utilbonus', 1)
+    if ajuste in ("HARD", "CRIT"): utilitarios[9] += 1
+    setmodo(modo_energia)
+    return True
 
 def acelerar(cargo):
     teste = rolar()
@@ -1126,7 +1112,7 @@ MENU = [opt("Piloto", submenu=[
     opt("Engenheiro", submenu=[
         opt("Consertar",   action=lambda s: None),
         opt("Abrir Painel de Utilitários", submenu=[
-            opt("Ajustar Gravidade", action=lambda s: add_buffer(1, 0, 2, 4, 0)),
+            opt("Ajustar Gravidade", action=lambda s: add_buffer(1, 0, 3, 2, 0)),
             opt("Ajustar Sonar", action=lambda s: ajustar_util("sonar")),
             opt("Ajustar Rádio", action=lambda s: ajustar_util("radio")),
             opt("Ajustar Criogenia", action=lambda s: ajustar_util("crio")),
@@ -1166,14 +1152,14 @@ MENU = [opt("Piloto", submenu=[
     opt("Atirador AAE", submenu=[
         opt("Atirar em um Inimigo",   submenu=lambda: listar_inimigos(4, 0)),
         #opt("Trocar Tipo de Munição", action=lambda s: None),
-        opt("Procurar Ponto Fraco",   submenu=lambda: listar_inimigos(4, 0)),
+        opt("Procurar Ponto Fraco",   submenu=lambda: listar_inimigos(4, 3, 1)),
         opt("Levantar",               action=lambda s: None),
         opt("Confirmar Ações", submenu= lambda: menuconfirm(4) ),
         opt("Voltar", action = lambda s: BACK),
     ]),
 
-    opt("Confirmar Ações", action=confirmar_acoes),
-    opt("Desligar Jogo",   action=escape_seq),
+    opt("Confirmar Ações", action=lambda s: confirmar_acoes()),
+    opt("Log de Ações", submenu=[opt("Log ainda não implementado"), opt("Voltar", action=lambda s: BACK)]), #painel reservado
 ]
 
 #entry point
@@ -1189,8 +1175,6 @@ def main(stdscr):
     run_menu(stdscr, MENU, layout="horizontal", draw_extras=draw_extras)
     # To add game-state overlays to the top layer:
     # run_menu(stdscr, MENU, layout="horizontal", draw_extras=my_hud_fn)
-
-f['gameon'] = 0
 
 if __name__ == '__main__':
     while f['gameon'] == 1:
