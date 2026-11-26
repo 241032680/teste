@@ -334,7 +334,10 @@ def criar_personagem(cargo):
         exec(f'{indi[o][0]}_{cargo}[0] = {int(rando)}', globals())
         exec(f'stats_{cargo}.append({indi[o][0]}_{cargo})', globals())
         exec(f'stats.append({indi[o][0]}_{cargo})', globals())
-
+        if o in mob: mob.append(free_identificador)
+        elif o in ger: ger.append(free_identificador) 
+        elif o in nav: nav.append(free_identificador) 
+        elif o in com: com.append(free_identificador)
 criar_personagem('piloto')
 criar_personagem('copiloto')
 criar_personagem('engenheiro')
@@ -721,7 +724,7 @@ bonus_cargo = {
 dts = [(10,12,14), (11,14,18), (12,16,21), (13,18,24), (18,26,36)]
 
 def rolar(teste, cargo):
-    base = teste[0]
+    exec(f'{base} = {teste}_{cargo}[0]', globals())
     if teste[15] in mob:
         base += mobilidade[0]
     elif teste[15] in ger:
@@ -970,6 +973,8 @@ def run_menu(stdscr, items, layout="vertical", draw_extras=draw_extras):
             return BACK
         elif key == curses.KEY_F12:
             return escape_seq()
+        elif key == curses.KEY_F1:
+            return run_crew_menu
         draw(stdscr, items, current, draw_extras)
         debugthing = 0
 
@@ -1018,11 +1023,14 @@ def atirar(tipo, alvo):
     else:
         return "Alvo Inválido"
 
+#print(inimigos)
+
 def listar_inimigos(cargo, opçao):
     #opçoes: 00 atirar; 03 procurar ptos fracos; 
     lista = []
     for alvo, nome in enumerate(inimigos.keys()):
-        lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(opçao, 2, alvo, cargo, 0)),)
+        if inimigos[nome]['hp'] > 0:
+            lista.append(opt(nome, action = lambda s, alvo=alvo: add_buffer(opçao, 2, alvo, cargo, 0)),)
     lista.append(opt("Voltar", action = lambda s: BACK))
     return lista
 
